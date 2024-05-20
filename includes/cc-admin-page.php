@@ -3,7 +3,7 @@
 	.cc_db_row:nth-child(odd) .cc_db_item { background-color: #bbbbbb; }
 	.cc_db_header_row  { position: sticky; top: 0; }
 	.cc_db_header_row .cc_db_item { background-color: #bbbbbb; position: sticky; top: 0; font-weight: 800; }
-	.cc_db_item { float: left; padding: 5px 10px; }
+	.cc_db_item { float: left; padding: 5px 10px; height: 20px; }
 	.cc_db_window { clear: both; height: 50%; overflow-y: scroll; resize: both; }
 </style>
 <script>
@@ -25,9 +25,31 @@
 		} 
 
 	};
-	xhr.open('GET', '<?php echo plugins_url() ?>/craftcation/includes/cc-tickets.php?action=cc_ticket_drop_table');
+	xhr.open('GET', '<?php echo plugins_url() ?>/craftcation-plugin/includes/cc-tickets.php?action=cc_ticket_drop_table');
 	xhr.send(null);
 }
+	
+	function cc_ticket_deleteRow_button(id) {
+		jQuery.ajax({
+			type: 'POST',
+			url: "<?php echo admin_url('admin-ajax.php'); ?>",
+			data: {"action": "cc_ticket_deleteRow", "element_id": id},
+			success: function (data) {
+				window.location.reload();
+			}
+		});
+	}
+	function cc_ticket_insert_2() {
+		jQuery.ajax({
+			type: 'POST',
+			url: "<?php echo admin_url('admin-ajax.php'); ?>",
+			data: {"action": "cc_ticket_insert_2"},
+			success: function (data) {
+				window.location.reload();
+			}
+		});
+	}
+	
 </script>
 
 <div class="wrap">
@@ -39,4 +61,12 @@
 	<h3>Ticket Database</h3>
 	<?php // cc_ticket_displayTable_Filters(); ?>
 	<?php cc_ticket_displayTable(); ?>
+</div>
+
+<div class="wrap">
+	<h3>Tools</h3>
+	
+	<a href="javascript:cc_ticket_insert_2();">Create Record ("123")</a>
+	<?php // cc_ticket_displayTable_Filters(); ?>
+	<?php // cc_ticket_displayTable(); ?>
 </div>

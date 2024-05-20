@@ -39,7 +39,21 @@ function cc_ticket_insert($orderNumber = '', $customerId = '', $paymentOrderNumb
 			'paymentOrderNumbers' => $paymentOrderNumbers.','.$paymentOrderNumbers,
 		)
 	);
-}
+} 
+function cc_ticket_insert_2() {
+	cc_ticket_insert('123', '123', '123');
+} add_action( 'wp_ajax_cc_ticket_insert_2', 'cc_ticket_insert_2' );
+function cc_ticket_deleteRow() { // Adds order to DB
+	global $wpdb, $cc_ticket_table_name;
+	require_once plugin_dir_path(__FILE__) . '../craftcation.php';
+	
+	$ThisThing = $wpdb->delete( 
+		$cc_ticket_table_name, 
+		array( 
+			'id' => $_POST['element_id'], 
+		)
+	);
+} add_action( 'wp_ajax_cc_ticket_deleteRow', 'cc_ticket_deleteRow' );
 function cc_ticket_drop() { // Drops table (admin)(broken)
 	global $wpdb, $cc_db_version, $cc_ticket_table_name;
 	/* Not working yet */
@@ -73,51 +87,55 @@ function cc_ticket_displayTable()  { // Displays Ticket DB
 	
 	echo '<div id="cc_db_window" class="cc_db_window" style="width: 90%; height: 50%;">';
 
-		/* Display Headers */
-		echo '<div class="cc_db_header_row cc_db_row">';
-		$i=0;
-		foreach( $tickets[0] as $key => $item) {
-			if($key == 'id') { /* Do nothing */ }
-			else {
-				echo '<div class="cc_db_item '.$key.'" style="width: 10%;">'.$key.'</div>';
-				$i++;
-			}
+	/* Display Headers */
+	echo '<div class="cc_db_header_row cc_db_row">';
+	foreach( $tickets[0] as $key => $item) {
+		if($key == 'id') {
+			echo '<div class="cc_db_item '.$key.'" style="width: 5%;">'.$key.'</div>';
+		} else {
+			echo '<div class="cc_db_item '.$key.'" style="width: 10%;">'.$key.'</div>';
 		}
-		echo '</div>';
+	}
+	echo '</div>'; // End header row
 
-		/* Display Results */
-		foreach( $tickets as $ticket ) {
-			$i=0;
-			echo '<div class="cc_db_row">';
-			foreach( $ticket as $key => $item) {
-				if($key == 'id') { /* Do nothing */ }
-				else {
-					echo '<div class="cc_db_item '.$key.'" style="width: 10%;">';
+	/* Display Results */
+	foreach( $tickets as $ticket ) {
+		/* Get TicketId from DB */
+		$ticketId = '';
+		foreach( $ticket as $key => $item) { if($key == 'id') $ticketId = $item; }
+		echo '<div id="ticketRow_'.$ticketId.'" class="cc_db_row">';	
+		
+		foreach( $ticket as $key => $item) {
+			if($key == 'id') { 
+				echo '<div class="cc_db_item '.$key.'" style="width: 5%;">';
+					echo '<button onclick="javascript:cc_ticket_deleteRow_button(\''.$item.'\');">Delete (x)</button>';
+			} else {
+				echo '<div class="cc_db_item '.$key.'" style="width: 10%;">';
 
-					if($key == 'id') { /* Do nothing */ }
-					else if($key == 'purchaseOrderNumber') { 
-						echo '<a href="/wp-admin/post.php?post='.$item.'&action=edit">'.$item.'</a>';
-					} else if($key == 'ticketCustomerId' or $key == 'purchaseCustomerId') {
-						echo '<a href="/wp-admin/user-edit.php?user_id='.$item.'">'.get_userdata($item)->first_name.' '.get_userdata($item)->last_name.'</a>';
-					} else if($key == 'paymentOrderNumbers') {
-						$paymentOrderNumbers = explode(',', $item);
+				if($key == 'purchaseOrderNumber') { 
+					echo '<a href="/wp-admin/post.php?post='.$item.'&action=edit">'.$item.'</a>';
+				} else if($key == 'ticketCustomerId' or $key == 'purchaseCustomerId') {
+					echo '<a href="/wp-admin/user-edit.php?user_id='.$item.'">'.get_userdata($item)->first_name.' '.get_userdata($item)->last_name.'</a>';
+				} else if($key == 'paymentOrderNumbers') {
+					$paymentOrderNumbers = explode(',', $item);
 
-						$p = 0;
-						foreach( $paymentOrderNumbers as $paymentOrderNumber ) {
-							if( $p != 0 ) { echo ', '; } else { $p++; }
+					$p = 0;
+					foreach( $paymentOrderNumbers as $paymentOrderNumber ) {
+						if( $p != 0 ) { echo ', '; } else { $p++; }
 
-							echo '<a href="/wp-admin/post.php?post='.$paymentOrderNumber.'&action=edit">'.$paymentOrderNumber.'</a>';
-						}
-					} else {
-						echo $item;
+						echo '<a href="/wp-admin/post.php?post='.$paymentOrderNumber.'&action=edit">'.$paymentOrderNumber.'</a>';
 					}
-
-					echo '</div>';
-					$i++;
+				} else {
+					echo $item;
 				}
 			}
+
 			echo '</div>';
-		} 
+		}
+		
+		echo '</div>';
+	}
+	
 	echo '</div>';
 }
 function cc_ticket_purchase_action( $order_id ) { // Add Order->DB every time a matching product is in a "Processing" order
@@ -149,10 +167,9 @@ function cc_ticket_purchase_action( $order_id ) { // Add Order->DB every time a 
 function cc_ticket_options() {
 	register_setting( 'cc-ticket-settings-group', 'cc_ticket_tags' );
 } add_action( 'admin_init', 'cc_ticket_options');
-
 if($_GET['action'] == 'cc_ticket_drop_table') {
 	global $wpdb, $cc_db_version, $cc_ticket_table_name;
-//	require_once WP_PLUGIN_DIR . '/craftcation/craftcation.php';
+//	require_once WP_PLUGIN_DIR . '/craftcation-plugin/craftcation.php';
 //	header( 'Content-Type: application/json' );
 //	cc_ticket_install_data();
 //	cc_ticket_drop();
