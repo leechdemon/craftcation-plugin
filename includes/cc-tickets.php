@@ -39,10 +39,54 @@ function cc_ticket_insert($orderNumber = '', $customerId = '', $paymentOrderNumb
 			'paymentOrderNumbers' => $paymentOrderNumbers.','.$paymentOrderNumbers,
 		)
 	);
-} 
-function cc_ticket_insert_2() {
-	cc_ticket_insert('123', '123', '123');
-} add_action( 'wp_ajax_cc_ticket_insert_2', 'cc_ticket_insert_2' );
+}
+function cc_ticket_import() {
+	$userprenom = $_POST['prenom'];
+	$usernom = $_POST['nom'];
+	$username = $_POST['email'];
+	
+	/* If no user exists, build a new one */
+	$userdata = array(      
+		'user_login' => $username,
+		'nickname' => $username,
+		'user_nicename' => $username,
+		'user_email' => $username,
+		'first_name' => $userprenom,
+		'last_name' => $usernom,
+//		'user_registered' => date( 'Y-m-d H:i:s' ),
+		'display_name' => $username,
+//		'show_admin_bar_front' => false,
+//		'role' => 'subscriber',
+//		'admin_color' => "fresh",
+//		'rich_editing' => "true", 
+	);
+	
+	$the_user = get_user_by('login', $username);
+	if ( !$the_user ) { $the_user = get_user_by('email', $username); }
+	
+	if ( $the_user ) {
+		$user_id = $the_user->ID;
+		
+		if (!is_wp_error( $user_id )){
+		   $push_id = array('ID' => $user_id);
+		   $merge = array_merge($userdata, $push_id);
+		   $user_id = wp_update_user( $merge );
+		   update_user_meta( $user_id, 'region', $region );
+		}
+		else {                                       
+			$html_update = "Broken";
+		}
+	 } else {
+		// create new user
+		$user_id = wp_insert_user($userdata);
+		wp_new_user_notification( $user_id, null, '' );
+		update_user_meta( $user_id, 'region', $region );
+	 }	
+
+//	echo $user_id;
+	/* Now that we have our user, buy a ticket. */
+	cc_ticket_insert('123', $user_id, '123');
+} add_action( 'wp_ajax_cc_ticket_import', 'cc_ticket_import' );
 function cc_ticket_deleteRow() { // Adds order to DB
 	global $wpdb, $cc_ticket_table_name;
 	require_once plugin_dir_path(__FILE__) . '../craftcation.php';
@@ -108,14 +152,27 @@ function cc_ticket_displayTable()  { // Displays Ticket DB
 		foreach( $ticket as $key => $item) {
 			if($key == 'id') { 
 				echo '<div class="cc_db_item '.$key.'" style="width: 5%;">';
-					echo '<button onclick="javascript:cc_ticket_deleteRow_button(\''.$item.'\');">Delete (x)</button>';
+					echo '<button onclick="javascript:cc_ticket_deleteRow_button(\''.$item.'\');">Delete [x]</button>';
 			} else {
 				echo '<div class="cc_db_item '.$key.'" style="width: 10%;">';
 
 				if($key == 'purchaseOrderNumber') { 
 					echo '<a href="/wp-admin/post.php?post='.$item.'&action=edit">'.$item.'</a>';
 				} else if($key == 'ticketCustomerId' or $key == 'purchaseCustomerId') {
-					echo '<a href="/wp-admin/user-edit.php?user_id='.$item.'">'.get_userdata($item)->first_name.' '.get_userdata($item)->last_name.'</a>';
+					$prettyname = $item;
+					$first = get_userdata( $item )->first_name;
+					$last = get_userdata( $item )->last_name;
+					
+					if($first && $last) {
+						$prettyname = $first .' '. $last;
+					}
+					else {
+						if($first) { $prettyname = $first; }
+						if($last) { $prettyname = $last; }
+					}
+					
+					echo '<img src="'.get_avatar_url( $item ).'" style="height: 100%; margin-right: 0.5rem;">';
+					echo '<a href="/wp-admin/user-edit.php?user_id='.$item.'" style="vertical-align: super;">'.$prettyname.'</a>';
 				} else if($key == 'paymentOrderNumbers') {
 					$paymentOrderNumbers = explode(',', $item);
 

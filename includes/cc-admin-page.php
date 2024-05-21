@@ -49,6 +49,22 @@
 			}
 		});
 	}
+	function cc_ticket_import(prenom, nom, email) {		
+		jQuery.ajax({
+			type: 'POST',
+			url: "<?php echo admin_url('admin-ajax.php'); ?>",
+			data: {
+				"action": "cc_ticket_import",
+				"prenom": prenom,
+				"nom": nom,
+				"email": email,
+			},
+			success: function (data) {
+//				console.log(data);
+				window.location.reload(); 
+			}
+		});
+	}
 	
 </script>
 
@@ -66,7 +82,9 @@
 <div class="wrap">
 	<h3>Tools</h3>
 	
-	<a href="javascript:cc_ticket_insert_2();">Create Record ("123")</a>
+	<a href="javascript:cc_ticket_import( 'Ted', 'Mosby', 'tedmosby_123abc321@gmail.com' );">Create User ("Ted")</a><br>
+	<a href="javascript:cc_ticket_import( 'Barney', 'Stinson', 'braneystinson_123abc321@gmail.com' );">Create User ("Barney")</a><br>
+	<a href="javascript:cc_ticket_import( 'Jason', 'Elliott', 'leechdemon@gmail.com' );">Create User ("Jason")</a><br>
 	<?php // cc_ticket_displayTable_Filters(); ?>
 	<?php // cc_ticket_displayTable(); ?>
 </div>
