@@ -61,7 +61,17 @@
 				"email": email,
 			},
 			success: function (data) {
-				window.location.reload(); 
+				
+				const delay = (delayInms) => {
+					return new Promise(resolve => setTimeout(resolve, delayInms));
+				};
+
+				const sample = async () => {
+					let delayres = await delay(1000);
+				};
+				sample();
+				
+				window.location.reload();
 			}
 		});
 	}
@@ -80,24 +90,75 @@
 </div>
 
 <script>
-	function import_csv() {
-//		if ( !file.type.match('*.csv') ) { continue; }
+	function ImportCSV() {
+		var file = document.getElementById('file-select').files[0];
+		var reader = new FileReader(); // File reader to read the file 
+		var sheet = '';
+        
+        // This event listener will happen when the reader has read the file
+        reader.addEventListener('load', function() {
+			var lines = reader.result.split("\r");
+			var result = [];
+
+			var headers=lines[0].split(",");
+			for(var i=1;i<lines.length;i++){
+
+			  var obj = {};
+			  var currentline=lines[i].split(",");
+
+			  for(var j=0;j<headers.length;j++){
+				  obj[headers[j]] = currentline[j];
+			  }
+
+			  result.push(obj);
+			}
+			
+			for(var i=0;i<result.length;i++){
+				cc_new_user(result[i].first, result[i].last, result[i].email);
+			}
+			
+			window.location.reload();
+        });
 		
-		
-		console.log( document.getElementById('file-select').files[0] );
-	} 
+        var csvContents = reader.readAsText(file); // Read the uploaded file
+	}
+	function csvJSON(csv){ //var csv is the CSV file with headers
+	  var lines = result.split("\n");
+	  var result = [];
+
+	  // NOTE: If your columns contain commas in their values, you'll need
+	  // to deal with those before doing the next step 
+	  // (you might convert them to &&& or something, then covert them back later)
+	  // jsfiddle showing the issue https://jsfiddle.net/
+	  var headers=lines[0].split(",");
+
+	  for(var i=1;i<lines.length;i++){
+
+		  var obj = {};
+		  var currentline=lines[i].split(",");
+
+		  for(var j=0;j<headers.length;j++){
+			  obj[headers[j]] = currentline[j];
+		  }
+
+		  result.push(obj);
+	  }
+
+	  return result; //JavaScript object
+//	  return JSON.stringify(result); //JSON
+	}
 </script> 
 
 <div class="wrap">
 	<h3>Tools</h3>
 	
-	<a href="javascript:cc_new_user( 'John', 'Smith', 'johnsmith@gmail.com' );">Create User ("John")</a><br>
-	<a href="javascript:cc_new_user( 'Jane', 'Doe', 'janedoe_123abc321@gmail.com' );">Create User ("Jane")</a><br>
-	<a href="javascript:cc_new_user( 'Jason', 'Elliott', 'le.echdemon@gmail.com' );">Create User ("Jason")</a><br>
+	<a href="javascript:cc_new_user( 'John', 'Smith', 'johnsmith@gmail.com' );">Purchase Ticket ("John")</a><br>
+	<a href="javascript:cc_new_user( 'Jane', 'Doe', 'janedoe_123abc321@gmail.com' );">Purchase Ticket ("Jane")</a><br>
+	<a href="javascript:cc_new_user( 'Jason', 'Elliott', 'leechdemon@gmail.com' );">Purchase Ticket ("Jason")</a><br>
 	<hr>
 	<a href="javascript:cc_ticket_dropTable_button();">Drop Table</a><br>
 	<hr>
-	<form id="file-form" action="javascript:import_csv();">
+	<form id="file-form" action="javascript:ImportCSV();">
 <!--	<form id="file-form" action="javascript:csv();" method="POST">-->
 		<input type="file" id="file-select" name="csv">
 		<button type="submit" id="upload-button">Upload</button>
