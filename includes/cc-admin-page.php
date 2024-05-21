@@ -82,9 +82,9 @@
 <div class="wrap">
 	<h3>Tools</h3>
 	
-	<a href="javascript:cc_ticket_import( 'Ted', 'Mosby', 'tedmosby_123abc321@gmail.com' );">Create User ("Ted")</a><br>
-	<a href="javascript:cc_ticket_import( 'Barney', 'Stinson', 'braneystinson_123abc321@gmail.com' );">Create User ("Barney")</a><br>
-	<a href="javascript:cc_ticket_import( 'Jason', 'Elliott', 'leechdemon@gmail.com' );">Create User ("Jason")</a><br>
+	<a href="javascript:cc_ticket_import( 'John', 'Smith', 'johnsmith@gmail.com' );">Create User ("John")</a><br>
+	<a href="javascript:cc_ticket_import( 'Jane', 'Doe', 'janedoe_123abc321@gmail.com' );">Create User ("Jane")</a><br>
+	<a href="javascript:cc_ticket_import( 'Jason', 'Elliott', 'le.echdemon@gmail.com' );">Create User ("Jason")</a><br>
 	<?php // cc_ticket_displayTable_Filters(); ?>
 	<?php // cc_ticket_displayTable(); ?>
 </div>
