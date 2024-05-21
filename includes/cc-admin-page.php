@@ -1,10 +1,10 @@
 <style>
-	.cc_db_row { clear: both; margin: 5px; }
+	.cc_db_row { clear: both; margin: 0px; }
 	.cc_db_row:nth-child(odd) .cc_db_item { background-color: #bbbbbb; }
 	.cc_db_header_row  { position: sticky; top: 0; }
-	.cc_db_header_row .cc_db_item { background-color: #bbbbbb; position: sticky; top: 0; font-weight: 800; }
-	.cc_db_item { float: left; padding: 5px 10px; height: 20px; }
-	.cc_db_window { clear: both; height: 50%; overflow-y: scroll; resize: both; }
+	.cc_db_header_row .cc_db_item { background-color: #bbbbbb; position: sticky; top: 0; font-weight: 800; border-bottom: solid 2px; }
+	.cc_db_item { float: left; padding: 5px 5px; height: 20px; }
+	.cc_db_window { clear: both; height: 50%; overflow-y: scroll; resize: both; border: solid 2px; }
 </style>
 <script>
 	function cc_ticket_drop() { 
@@ -39,6 +39,17 @@
 			}
 		});
 	}
+	function cc_ticket_dropTable_button(id) {
+		jQuery.ajax({
+			type: 'POST',
+			url: "<?php echo admin_url('admin-ajax.php'); ?>",
+			data: {"action": "cc_ticket_dropTable"},
+			success: function (data) {
+//				console.log('data', data);
+				window.location.reload();
+			}
+		});
+	}
 	function cc_new_user(prenom, nom, email) {		
 		jQuery.ajax({
 			type: 'POST',
@@ -69,8 +80,8 @@
 </div>
 
 <script>
-	function csv() {
-		if (!file.type.match('*.csv')) { continue; }
+	function import_csv() {
+//		if ( !file.type.match('*.csv') ) { continue; }
 		
 		
 		console.log( document.getElementById('file-select').files[0] );
@@ -83,7 +94,10 @@
 	<a href="javascript:cc_new_user( 'John', 'Smith', 'johnsmith@gmail.com' );">Create User ("John")</a><br>
 	<a href="javascript:cc_new_user( 'Jane', 'Doe', 'janedoe_123abc321@gmail.com' );">Create User ("Jane")</a><br>
 	<a href="javascript:cc_new_user( 'Jason', 'Elliott', 'le.echdemon@gmail.com' );">Create User ("Jason")</a><br>
-	<form id="file-form" action="javascript:csv();">
+	<hr>
+	<a href="javascript:cc_ticket_dropTable_button();">Drop Table</a><br>
+	<hr>
+	<form id="file-form" action="javascript:import_csv();">
 <!--	<form id="file-form" action="javascript:csv();" method="POST">-->
 		<input type="file" id="file-select" name="csv">
 		<button type="submit" id="upload-button">Upload</button>

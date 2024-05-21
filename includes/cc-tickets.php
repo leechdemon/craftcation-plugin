@@ -87,7 +87,7 @@ function cc_new_user() {
 	/* Now that we have our user, buy a ticket. */ 
 	cc_ticket_insert('', $user_id, '');
 } add_action( 'wp_ajax_cc_new_user', 'cc_new_user' );
-function cc_ticket_deleteRow() { // Adds order to DB
+function cc_ticket_deleteRow() { // Deletes row from DB matching "Id".
 	global $wpdb, $cc_ticket_table_name;
 	require_once plugin_dir_path(__FILE__) . '../craftcation.php';
 	
@@ -98,6 +98,18 @@ function cc_ticket_deleteRow() { // Adds order to DB
 		)
 	);
 } add_action( 'wp_ajax_cc_ticket_deleteRow', 'cc_ticket_deleteRow' );
+function cc_ticket_dropTable() { // Truncates the entire table.
+	global $wpdb, $cc_ticket_table_name;
+//	echo $cc_ticket_table_name;
+//	require_once plugin_dir_path(__FILE__) . '../craftcation.php';
+	
+//	echo '1';
+	$query = 'TRUNCATE TABLE ' . $cc_ticket_table_name;
+//	echo json_encode( $query );
+	$wpdb->query($query); 
+	
+	echo $query;
+} add_action( 'wp_ajax_cc_ticket_dropTable', 'cc_ticket_dropTable' );
 function cc_ticket_drop() { // Drops table (admin)(broken)
 	global $wpdb, $cc_db_version, $cc_ticket_table_name;
 	/* Not working yet */
@@ -129,15 +141,15 @@ function cc_ticket_displayTable()  { // Displays Ticket DB
 //	$width = [10,10,10,10,10,10]; 	
 	
 	
-	echo '<div id="cc_db_window" class="cc_db_window" style="width: 90%; height: 50%;">';
+	echo '<div id="cc_db_window" class="cc_db_window" style="width: 100%; height: 50%;">';
 
 	/* Display Headers */
 	echo '<div class="cc_db_header_row cc_db_row">';
 	foreach( $tickets[0] as $key => $item) {
 		if($key == 'id') {
-			echo '<div class="cc_db_item '.$key.'" style="width: 5%;">'.$key.'</div>';
+			echo '<div class="cc_db_item '.$key.'" style="width: 8%;">'.$key.'</div>';
 		} else {
-			echo '<div class="cc_db_item '.$key.'" style="width: 10%;">'.$key.'</div>';
+			echo '<div class="cc_db_item '.$key.'" style="width: 14%;">'.$key.'</div>';
 		}
 	}
 	echo '</div>'; // End header row
@@ -151,10 +163,10 @@ function cc_ticket_displayTable()  { // Displays Ticket DB
 		
 		foreach( $ticket as $key => $item) {
 			if($key == 'id') { 
-				echo '<div class="cc_db_item '.$key.'" style="width: 5%;">';
+				echo '<div class="cc_db_item '.$key.'" style="width: 8%;">';
 					echo '<button onclick="javascript:cc_ticket_deleteRow_button(\''.$item.'\');">Delete [x]</button>';
 			} else {
-				echo '<div class="cc_db_item '.$key.'" style="width: 10%;">';
+				echo '<div class="cc_db_item '.$key.'" style="width: 14%;">';
 
 				if($key == 'purchaseOrderNumber') { 
 					echo '<a href="/wp-admin/post.php?post='.$item.'&action=edit">'.$item.'</a>';
