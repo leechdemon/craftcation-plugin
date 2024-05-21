@@ -39,28 +39,17 @@
 			}
 		});
 	}
-	function cc_ticket_insert_2() {
-		jQuery.ajax({
-			type: 'POST',
-			url: "<?php echo admin_url('admin-ajax.php'); ?>",
-			data: {"action": "cc_ticket_insert_2"},
-			success: function (data) {
-				window.location.reload();
-			}
-		});
-	}
-	function cc_ticket_import(prenom, nom, email) {		
+	function cc_new_user(prenom, nom, email) {		
 		jQuery.ajax({
 			type: 'POST',
 			url: "<?php echo admin_url('admin-ajax.php'); ?>",
 			data: {
-				"action": "cc_ticket_import",
+				"action": "cc_new_user",
 				"prenom": prenom,
 				"nom": nom,
 				"email": email,
 			},
 			success: function (data) {
-//				console.log(data);
 				window.location.reload(); 
 			}
 		});
@@ -79,12 +68,26 @@
 	<?php cc_ticket_displayTable(); ?>
 </div>
 
+<script>
+	function csv() {
+		if (!file.type.match('*.csv')) { continue; }
+		
+		
+		console.log( document.getElementById('file-select').files[0] );
+	} 
+</script> 
+
 <div class="wrap">
 	<h3>Tools</h3>
 	
-	<a href="javascript:cc_ticket_import( 'John', 'Smith', 'johnsmith@gmail.com' );">Create User ("John")</a><br>
-	<a href="javascript:cc_ticket_import( 'Jane', 'Doe', 'janedoe_123abc321@gmail.com' );">Create User ("Jane")</a><br>
-	<a href="javascript:cc_ticket_import( 'Jason', 'Elliott', 'le.echdemon@gmail.com' );">Create User ("Jason")</a><br>
+	<a href="javascript:cc_new_user( 'John', 'Smith', 'johnsmith@gmail.com' );">Create User ("John")</a><br>
+	<a href="javascript:cc_new_user( 'Jane', 'Doe', 'janedoe_123abc321@gmail.com' );">Create User ("Jane")</a><br>
+	<a href="javascript:cc_new_user( 'Jason', 'Elliott', 'le.echdemon@gmail.com' );">Create User ("Jason")</a><br>
+	<form id="file-form" action="javascript:csv();">
+<!--	<form id="file-form" action="javascript:csv();" method="POST">-->
+		<input type="file" id="file-select" name="csv">
+		<button type="submit" id="upload-button">Upload</button>
+	</form>
 	<?php // cc_ticket_displayTable_Filters(); ?>
 	<?php // cc_ticket_displayTable(); ?>
 </div>

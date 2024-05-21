@@ -40,7 +40,7 @@ function cc_ticket_insert($orderNumber = '', $customerId = '', $paymentOrderNumb
 		)
 	);
 }
-function cc_ticket_import() {
+function cc_new_user() {
 	$userprenom = $_POST['prenom'];
 	$usernom = $_POST['nom'];
 	$username = $_POST['email'];
@@ -81,12 +81,12 @@ function cc_ticket_import() {
 		$user_id = wp_insert_user($userdata);
 		wp_new_user_notification( $user_id, null, '' );
 		update_user_meta( $user_id, 'region', $region );
-	 }	
+	 }
 
 //	echo $user_id;
-	/* Now that we have our user, buy a ticket. */
-	cc_ticket_insert('123', $user_id, '123');
-} add_action( 'wp_ajax_cc_ticket_import', 'cc_ticket_import' );
+	/* Now that we have our user, buy a ticket. */ 
+	cc_ticket_insert('', $user_id, '');
+} add_action( 'wp_ajax_cc_new_user', 'cc_new_user' );
 function cc_ticket_deleteRow() { // Adds order to DB
 	global $wpdb, $cc_ticket_table_name;
 	require_once plugin_dir_path(__FILE__) . '../craftcation.php';
