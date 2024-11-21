@@ -236,7 +236,7 @@ function cc_ticket_purchase_action( $order_id ) { // Add Order->DB every time a 
 function cc_ticket_options() {
 	register_setting( 'cc-ticket-settings-group', 'cc_ticket_tags' );
 } add_action( 'admin_init', 'cc_ticket_options');
-if($_GET['action'] == 'cc_ticket_drop_table') {
+if( isset($_GET['action']) && $_GET['action'] == 'cc_ticket_drop_table') {
 	global $wpdb, $cc_db_version, $cc_ticket_table_name;
 //	require_once WP_PLUGIN_DIR . '/craftcation-plugin/craftcation.php';
 //	header( 'Content-Type: application/json' );
