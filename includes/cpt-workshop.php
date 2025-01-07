@@ -251,7 +251,7 @@ function DisplayWorkshopSchedule( $atts ) {
 		/* Display Things */
 		$Output .= '<style>
 			.workshop-selections, .get_response { background: #DDD; padding: 0.5rem; margin: 0rem; border: solid 1px red; }
-			.workshop-selections { display: none; }
+//			.workshop-selections { display: none; }
 //			.get_response { display: none; }
 		
 			.workshop_schedule { display: grid; margin: 1rem 2rem; }
@@ -267,7 +267,7 @@ json_encode($workshopSelection) .'</div>';
 		/* Draw the Slots */
 		$Output .= '<div class="workshop_schedule">';
 		foreach( $slots as $slot ) {
-			$s = $slot->name;
+			$s = $slot->slug;
 			$CurrentWorkshop = '(Select a Workshop)';
 			$Selection_id = '';
 
@@ -282,14 +282,14 @@ json_encode($workshopSelection) .'</div>';
 	   		}
 
 			$Output .= '<div class="workshop_timeslot">
-				<div class="workshop_item">Timeslot '.$s.'</div>
+				<div class="workshop_item">'.$slot->name.'</div>
 				<div class="workshop_item">
 					'.$CurrentWorkshop.'
 				</div>
 				<select id="timeslot_'.$s.'" name="timeslot_'.$s.'" class="workshop_item timeslot" form="workshopSelection">
 					<option value="0">--- Select Workshop ---</option>';
 					foreach( $workshops as $workshop ) {
-						if( get_the_terms( $workshop['id'], 'timeslot' )[0]->name == $s ) { 
+						if( get_the_terms( $workshop['id'], 'timeslot' )[0]->slug == $s ) { 
 							$IsSelected = $IsStarred = '';
 							if( $workshop['id'] == $Selection_id ) { $IsSelected = ' selected="true"'; $IsStarred = '** '; }
 
@@ -372,8 +372,8 @@ function get_workshopSelection() {
 
 					if($itemReturned == false) { 
 						foreach($slots as $slot) {
-							if( get_the_terms( $workshops[$w]['id'], 'timeslot' )[0]->name == $slot->name ) {
-								$workshopSelection[$slot->name] []= $workshops[$w]['id'];
+							if( get_the_terms( $workshops[$w]['id'], 'timeslot' )[0]->slug == $slot->slug ) {
+								$workshopSelection[$slot->slug] []= $workshops[$w]['id'];
 							}
 						}
 					}						
