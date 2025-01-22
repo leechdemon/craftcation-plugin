@@ -53,7 +53,7 @@ function Presenter_Post_Type() {
 		'public'                => true,
 		'show_ui'               => true,
 		'show_in_menu'          => true,
-		'menu_position'         => 4,
+		'menu_position'         => 7,
 		'menu_icon'             => $Icon,
 		'show_in_admin_bar'     => true,
 		'show_in_nav_menus'     => true,

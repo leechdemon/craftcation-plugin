@@ -8,43 +8,51 @@ if(!function_exists('Test')) { // PHP script to dump variable into JavaScript co
 		else { echo "<pre>" .var_dump($js_code). "</pre>"; }
 	 }
 }
-if(!function_exists('OutputTemplateSlug')) {
-	function OutputTemplateSlug() {	
-		$Display = false;	
-		if($Display) {
-			global $template;
-			echo '<script>console.log("Template: ' .basename($template).'");</script>';
-		}
-	} add_action( 'wp_head', 'OutputTemplateSlug' );
-}
+//if(!function_exists('OutputTemplateSlug')) {
+//	function OutputTemplateSlug() {	
+//		$Display = false;	
+//		if($Display) {
+//			global $template;
+//			echo '<script>console.log("Template: ' .basename($template).'");</script>';
+//		}
+//	} add_action( 'wp_head', 'OutputTemplateSlug' );
+//}
 
 function cc_admin_menu() {
 	add_menu_page(
 		'Craftcation Dashboard', // Title of the page
 		'Craftcation', // Text to show on the menu link
 		'manage_options', // Capability requirement to see the link
-		'admin-settings-page', // The 'slug' - file to display when clicking the link
+		'admin-settings', // The 'slug' - file to display when clicking the link
 		'display_settings',
 		'dashicons-tickets',
 		6
 	);
 } add_action( 'admin_menu', 'cc_admin_menu' );
 function display_settings() {
-	$adminMenuSlug = 'admin-settings-page';
+	$adminMenuSlug = 'pages/admin-settings';
     require_once $adminMenuSlug . '.php'; //--> make sure you read up on paths and require to find your file.
 }
 function display_tickets() {
-	$adminMenuSlug = 'admin-ticket-page';
+	$adminMenuSlug = 'pages/admin-ticket';
+    require_once $adminMenuSlug . '.php'; //--> make sure you read up on paths and require to find your file.
+}
+function display_presenters() {
+	$adminMenuSlug = 'pages/admin-presenter';
     require_once $adminMenuSlug . '.php'; //--> make sure you read up on paths and require to find your file.
 }
 function display_workshops() {
-	$adminMenuSlug = 'admin-workshop-page';
+	$adminMenuSlug = 'pages/admin-workshop';
+    require_once $adminMenuSlug . '.php'; //--> make sure you read up on paths and require to find your file.
+}
+function display_waitlists() {
+	$adminMenuSlug = 'pages/admin-waitlist';
     require_once $adminMenuSlug . '.php'; //--> make sure you read up on paths and require to find your file.
 }
 
 function cc_admin_settings_menu() {
-	$adminMenuSlug = 'admin-settings-page';
-	$menuSlug = 'admin-settings-page';
+	$adminMenuSlug = 'admin-settings';
+	$menuSlug = 'admin-settings';
 	$menuTitle = 'Settings';
 	
 	add_submenu_page(
@@ -57,10 +65,10 @@ function cc_admin_settings_menu() {
 		'30' // position
 	);	
 }  add_action( 'admin_menu', 'cc_admin_settings_menu' );
-function cc_admin_tickets_menu() {
-	$adminMenuSlug = 'admin-settings-page';
-	$menuSlug = 'admin-ticket-page';
-	$menuTitle = 'Tickets';
+function cc_admin_presenter_menu() {
+	$adminMenuSlug = 'admin-settings';
+	$menuSlug = 'admin-presenter';
+	$menuTitle = 'Presenters';
 	
 	add_submenu_page(
 		$adminMenuSlug, // parent slug
@@ -68,13 +76,13 @@ function cc_admin_tickets_menu() {
 		$menuTitle, // menu title
 		'manage_options', // Capability requirement to see the link
 		$menuSlug, // The 'slug' - file to display when clicking the link
-		'display_tickets', // callback function
-		'80' // position
+		'display_presenters', // callback function
+		'40' // position
 	);	
-}  add_action( 'admin_menu', 'cc_admin_tickets_menu' );
+}  add_action( 'admin_menu', 'cc_admin_presenter_menu' );
 function cc_admin_workshops_menu() {
-	$adminMenuSlug = 'admin-settings-page';
-	$menuSlug = 'admin-workshop-page';
+	$adminMenuSlug = 'admin-settings';
+	$menuSlug = 'admin-workshop';
 	$menuTitle = 'Workshops';
 	
 	add_submenu_page(
@@ -84,9 +92,39 @@ function cc_admin_workshops_menu() {
 		'manage_options', // Capability requirement to see the link
 		$menuSlug, // The 'slug' - file to display when clicking the link
 		'display_workshops', // callback function
-		'80' // position
+		'50' // position
 	);	
 }  add_action( 'admin_menu', 'cc_admin_workshops_menu' );
+function cc_admin_tickets_menu() {
+	$adminMenuSlug = 'admin-settings';
+	$menuSlug = 'admin-ticket';
+	$menuTitle = 'Tickets';
+	
+	add_submenu_page(
+		$adminMenuSlug, // parent slug
+		$menuTitle . ' Page', // page title
+		$menuTitle, // menu title
+		'manage_options', // Capability requirement to see the link
+		$menuSlug, // The 'slug' - file to display when clicking the link
+		'display_tickets', // callback function
+		'60' // position
+	);	
+}  add_action( 'admin_menu', 'cc_admin_tickets_menu' );
+function cc_admin_waitlist_menu() {
+	$adminMenuSlug = 'admin-settings';
+	$menuSlug = 'admin-waitlist';
+	$menuTitle = 'Waitlists';
+	
+	add_submenu_page(
+		$adminMenuSlug, // parent slug
+		$menuTitle . ' Page', // page title
+		$menuTitle, // menu title
+		'manage_options', // Capability requirement to see the link
+		$menuSlug, // The 'slug' - file to display when clicking the link
+		'display_waitlists', // callback function
+		'80' // position
+	);	
+}  add_action( 'admin_menu', 'cc_admin_waitlist_menu' );
 
 function cc_shortcode( $atts, $content = "" ) {
 	ob_start();

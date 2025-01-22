@@ -40,7 +40,6 @@ function WSCategory_Taxonomy() {
 		register_taxonomy($Lower,array('presenter','workshop', 'product'),$items);
 	}
 } add_action( 'init', 'WSCategory_Taxonomy', 10 );
-
 function Craft_Taxonomy() {
 	if(!taxonomy_exists('craft')) {
 		$Display = 'Craft';
@@ -80,7 +79,6 @@ function Craft_Taxonomy() {
 		register_taxonomy($Lower,array('presenter','workshop', 'product'),$items);
 	}
 } add_action( 'init', 'Craft_Taxonomy', 10 );
-
 function Timeslot_Taxonomy() {
 	if(!taxonomy_exists('timeslot')) {
 		$Display = 'Timeslot';
@@ -153,7 +151,6 @@ function Difficulty_Taxonomy() {
 		register_taxonomy($Lower,array('workshop', 'product'),$items);
 	}
 } add_action( 'init', 'Difficulty_Taxonomy', 10 );
-
 function TermsByID( $atts ) {
 	/* Used on workshop page to link to coordinating crafts */	
 	/* Used on workshop page to link to coordinating timeslots */	

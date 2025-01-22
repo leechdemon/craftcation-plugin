@@ -1,14 +1,10 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <dwsync>
-<file name="admin-settings-page.php" server="craftcationcon.sftp.wpengine.com:2222" local="133790298810000000" remote="133790298810000000" Dst="1" />
-<file name="cpt-workshop.php" server="craftcationcon.sftp.wpengine.com:2222" local="133819755208530000" remote="133819755250000000" Dst="1" />
-<file name="admin-ticket-page.php" server="craftcationcon.sftp.wpengine.com:2222" local="133790298810000000" remote="133790298810000000" Dst="1" />
-<file name="db-workshops.php" server="craftcationcon.sftp.wpengine.com:2222" local="133790298770000000" remote="133790298770000000" Dst="1" />
-<file name="cpt-terms.php" server="craftcationcon.sftp.wpengine.com:2222" local="133792645810000000" remote="133792645810000000" Dst="1" />
-<file name="db-tickets.php" server="craftcationcon.sftp.wpengine.com:2222" local="133790298780000000" remote="133790298780000000" Dst="1" />
-<file name="admin-workshop-page.php" server="craftcationcon.sftp.wpengine.com:2222" local="133790298820000000" remote="133790298820000000" Dst="1" />
-<file name="tools.php" server="craftcationcon.sftp.wpengine.com:2222" local="133790298810000000" remote="133790298810000000" Dst="1" />
-<file name="db-workshops-js.php" server="craftcationcon.sftp.wpengine.com:2222" local="133790298820000000" remote="133790298820000000" Dst="1" />
-<file name="db-workshops.js" server="craftcationcon.sftp.wpengine.com:2222" local="133790298820000000" remote="133790298820000000" Dst="1" />
-<file name="cpt-presenter.php" server="craftcationcon.sftp.wpengine.com:2222" local="133792644220000000" remote="133792644220000000" Dst="1" />
+<file name="cpt-workshop.php" server="craftcationcon.sftp.wpengine.com:2222" local="133820528146850000" remote="133820536120000000" Dst="1" />
+<file name="db-workshops.php" server="craftcationcon.sftp.wpengine.com:2222" local="133790298770000000" remote="133820536130000000" Dst="1" />
+<file name="cpt-terms.php" server="craftcationcon.sftp.wpengine.com:2222" local="133820528383420000" remote="133820536110000000" Dst="1" />
+<file name="db-workshops.js" server="craftcationcon.sftp.wpengine.com:2222" local="133790298820000000" remote="133820536120000000" Dst="1" />
+<file name="cpt-presenter.php" server="craftcationcon.sftp.wpengine.com:2222" local="133820246359240000" remote="133820536110000000" Dst="1" />
+<file name="cc-tickets.php" server="craftcationcon.sftp.wpengine.com:2222" local="133807322348000000" remote="133820536110000000" Dst="1" />
+<file name="db-tickets.php" server="craftcationcon.sftp.wpengine.com:2222" local="133820533978440000" remote="133820536120000000" Dst="1" />
 </dwsync>
