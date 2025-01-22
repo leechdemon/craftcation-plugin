@@ -139,17 +139,25 @@ function Process_WorkshopSelectionUpdates() {
 						}
 					}
 				}
-				
+								
+				/* Check for form errors... */
 				if( $item > 0 && $notDuplicate ) { 
-					/* Add the item to the order */
-					$hasItems = true;
-					$order_req[ $t[1] ] = $item;
 
-					/* If we're adding an item, and there's already a workshopSelection... */
-					if( $workshopSelection[ $t[1] ] ) {
-						$hasRefunds = true;
-						$refund_req[ $t[1] ] = $workshopSelection[ $t[1] ];
+					$inStock = false;
+					$stockCheck = wc_get_product( $item );
+					/* If it's still in stock... */
+					if ( $stockCheck->is_in_stock() ) { 
+						/* Add the item to the order */
+						$hasItems = true;
+						$order_req[ $t[1] ] = $item;
+
+						/* If we're adding an item, and there's already a workshopSelection... */
+						if( $workshopSelection[ $t[1] ] ) {
+							$hasRefunds = true;
+							$refund_req[ $t[1] ] = $workshopSelection[ $t[1] ];
+						}
 					}
+
 				}
 
 			}
@@ -165,17 +173,19 @@ function Process_WorkshopSelectionUpdates() {
 		/* Refund Old Items */
 		if( $hasRefunds ) {
 			WorkshopSelection_RefundItems( $refund_req );
-		}
-		
-		
-		
+		}	
+	}
+	
+	/* Process Waitlist changes */
+	if( isset( $_GET['waitlist'] ) ) {
+		$Output .= '<script>console.log("'.$_GET['waitlist'].'");</script>';
 	}
 
 	return $Output;
 } add_shortcode('Process_WorkshopSelectionUpdates', 'Process_WorkshopSelectionUpdates');
 function WorkshopSelection_AddOrder( $order_req ) {
 	$args = array(
-		'status' => 'wc-processing',
+		'status' => 'wc-complete',
 		'customer_id' => wp_get_current_user()->id,
 	);
 	$order = wc_create_order( $args );
@@ -183,14 +193,15 @@ function WorkshopSelection_AddOrder( $order_req ) {
 	foreach( $order_req as $product_id ) {
 		$order->add_product( get_product( $product_id ) , 1 );
 	}
-
+	
+	$order->payment_complete();
 	return $order;
 }
 function WorkshopSelection_RefundItems( $refund_req ) {
 	/* Build list of All Orders for current customer, status = "Processing" */
 	$args = array(
 		'customer_id' => wp_get_current_user()->id,
-		'status' => 'processing',
+//		'status' => 'processing',
 		'limit' => -1,
 //			'order' => 'DESC',
 //			'order' => 'ASC',
@@ -218,14 +229,20 @@ function WorkshopSelection_RefundItems( $refund_req ) {
 				foreach( $slot as $refund_req_item ) {
 					/* If this item matches the current refund_req_item */
 					if( $item['product_id'] == $refund_req_item ) {
+						/* If the product is in stock, restock as expected. */
+						/* If the product is sold out, do not restock it. */
+						$stockCheck = wc_get_product( $item['product_id'] );
+						if ( $stockCheck->is_in_stock() ) { $restockItems = true; }
+						else { $restockItems = false; }
 
 						/* Refund it */
 						$line_items[ $item_id ] = array( 'qty' => 1, );
 						$refund = wc_create_refund( array(
-							'amount'         => 0,
+//							'amount'         => 0,
 							'reason'         => '',
 							'order_id'       => $o,
 							'line_items'     => $line_items,
+							'restock_items'  => $restockItems,
 						));	
 
 					}
@@ -255,17 +272,27 @@ function DisplayWorkshopSchedule( $atts ) {
 //			.get_response { display: none; }
 		
 			.workshop_schedule { display: grid; margin: 1rem 2rem; }
-			.workshop_timeslot { width: 100%; background-color: #666; clear: both; padding: 0.5rem; color: white; font-weight: 600; }
-			.workshop_timeslot:nth-child(odd) { background-color: #999; }
-			.workshop_item { float: left; padding: 0rem 0.5rem; }
+			.workshop_timeslot { width: 100%; background-color: #666; clear: both; padding: 0.5rem; color: white; font-weight: 500; }
+			.workshop_timeslot:nth-child(even) { background-color: #999; }
+			.workshop_item { width: 18%; float: left; padding: 0rem 0.5rem; }
+			.workshop_item:first-child { width: 30%; }
+			.workshop_label { font-weight: 800; }
+			option.item_grayedout { color: #ccc !important; }
 		</style>';
-
+		
 		/* Draw the workshop selections */
 		$Output .= '<div class="workshop-selections">Workshop Selections:<br>'. json_encode($workshopSelection) .'</div>';
-json_encode($workshopSelection) .'</div>';
+//json_encode($workshopSelection) .'</div>';
 
 		/* Draw the Slots */
 		$Output .= '<div class="workshop_schedule">';
+			/* Draw the Headers */
+			$Output .= '<div class="workshop_timeslot">
+				<div class="workshop_item workshop_label">Timeslot</div>
+				<div class="workshop_item workshop_label">My Registration</div>
+				<div class="workshop_item workshop_label">New Registration</div>
+				<div class="workshop_item workshop_label">Workshop Notes</div>
+			</div>';
 		foreach( $slots as $slot ) {
 			$s = $slot->slug;
 			$CurrentWorkshop = '(Select a Workshop)';
@@ -283,21 +310,53 @@ json_encode($workshopSelection) .'</div>';
 
 			$Output .= '<div class="workshop_timeslot">
 				<div class="workshop_item">'.$slot->name.'</div>
-				<div class="workshop_item">
-					'.$CurrentWorkshop.'
-				</div>
+				<div class="workshop_item">'.$CurrentWorkshop.'</div>
 				<select id="timeslot_'.$s.'" name="timeslot_'.$s.'" class="workshop_item timeslot" form="workshopSelection">
 					<option value="0">--- Select Workshop ---</option>';
 					foreach( $workshops as $workshop ) {
 						if( get_the_terms( $workshop['id'], 'timeslot' )[0]->slug == $s ) { 
-							$IsSelected = $IsStarred = '';
-							if( $workshop['id'] == $Selection_id ) { $IsSelected = ' selected="true"'; $IsStarred = '** '; }
+							$IsGrayedOut = $IsSoldOut = $IsSelected = $IsStarred = '';
+							if( $workshop['id'] == $Selection_id ) { $IsSelected = ' selected="true"'; $IsStarred = ' **'; }
+							if( $workshop['stock_quantity'] < 1 ) { $IsGrayedOut = ' class="item_grayedout"'; $IsSoldOut = ' (Sold Out)'; } 
 
-							$Output .= '<option value="'.$workshop['id'].'"'.$IsSelected.'>'.$IsStarred.$workshop['name'].'</option>';
+							$Output .= '<option value="'.$workshop['id'].'"'.$IsSelected.$IsGrayedOut.'>';
+							$Output .= $workshop['name'].$IsStarred.$IsSoldOut.'</option>';
 						}
 					}
-				$Output .= '</select>
-			</div>';
+				$Output .= '</select>';
+			
+				$Output .= '<div class="workshop_item">';
+				foreach( $workshops as $workshop ) {
+					if( get_the_terms( $workshop['id'], 'timeslot' )[0]->slug == $s ) { 
+//						$Output .= '<div id="workshop_notes_item_'.$workshop['id'].'" class="workshop_notes_'.$s.'" style="display:none;">'.$workshop['name'].'</div>';
+						$IsSelected = ' style="display:none;"';
+						if( $workshop['id'] == $Selection_id ) { $IsSelected = ''; }
+						
+//						$Output .= '<div id="workshop_notes_item_'.$workshop['id'].'" class="workshop_notes_'.$s.'"'.$IsSelected.'>'.substr($workshop['name'],0,1).' - '.$workshop['stock_quantity'].' spaces</div>';
+						$Output .= '<div id="workshop_notes_item_'.$workshop['id'].'" class="workshop_notes_'.$s.'"'.$IsSelected.'>';
+						if( $workshop['stock_quantity'] < 1 ) {
+							$Output .= DisplayWaitlistButton( $workshop['id'] );
+						}
+						$Output .= '</div>';
+					}
+				}
+				$Output .= '<script>
+				
+					const selectElement'.$s.' = document.getElementById("timeslot_'.$s.'");
+
+					selectElement'.$s.'.addEventListener("change", (event) => {
+						var workshopNotes = document.getElementsByClassName( "workshop_notes_'.$s.'" );
+						for( var n = 0; n < workshopNotes.length; n++ ) {
+							workshopNotes[n].style.display = "none";
+						}
+						
+						document.getElementById( "workshop_notes_item_"+event.target.value ).style.display = "block";
+					});
+				
+				
+				</script>';
+				$Output .= '</div>';
+			$Output .= '</div>';
 		}
 		$Output .= '<form action="#" method="post" id="workshopSelection">
 			<input type="hidden" name="order" id="order" value="order">
@@ -310,6 +369,9 @@ json_encode($workshopSelection) .'</div>';
 		return 'Please log in.';
 	}
 } add_shortcode('DisplayWorkshopSchedule', 'DisplayWorkshopSchedule');
+function CSV_Image( $url ) {
+	return explode( ')', explode( '(', $url )[1] )[0];
+}
 function get_workshopSelection() {
 	/* Build list of All Workshops */
 	$args = array(
@@ -328,7 +390,7 @@ function get_workshopSelection() {
 	/* Build list of All Orders for current customer, status = "Processing" */
 	$args = array(
 		'customer_id' => wp_get_current_user()->id,
-		'status' => 'processing',
+//		'status' => 'processing',
 		'limit' => -1,
 //			'order' => 'DESC',
 //			'order' => 'ASC',
@@ -406,7 +468,11 @@ function WorkshopFilterDropdowns( $atts ) {
 	
 	return $Output;
 } add_shortcode('WorkshopFilterDropdowns', 'WorkshopFilterDropdowns');
-
+function DisplayWaitlistButton( $workshopId ) {
+	$Output = '<a href="?waitlist='.$workshopId.'">Add me to Waitlist</a>';
+	
+	return $Output;
+}
 function workshop_cpt_autosave($post_id) {
     if (get_post_type($post_id) == 'product') {
 		$product = wc_get_product($post_id);
