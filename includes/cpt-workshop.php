@@ -375,7 +375,8 @@ function CSV_Image( $url ) {
 function get_workshopSelection() {
 	/* Build list of All Workshops */
 	$args = array(
-		'type' => 'workshop',
+//		'type' => 'workshop',
+		'tag' => 'workshop2025',
 	);
 	$w = wc_get_products( $args );
 	$workshops = array();
@@ -473,13 +474,13 @@ function DisplayWaitlistButton( $workshopId ) {
 	
 	return $Output;
 }
-function workshop_cpt_autosave($post_id) {
-    if (get_post_type($post_id) == 'product') {
-		$product = wc_get_product($post_id);
-        if($product->type == 'workshop') {
-			/* Workshop auto-save features go here */
-			
-			update_post_meta($post_id, 'presenter_id', $post_id);
-		}
-    }
-} add_action('save_post', 'workshop_cpt_autosave');
+//function workshop_cpt_autosave($post_id) {
+//    if (get_post_type($post_id) == 'product') {
+//		$product = wc_get_product($post_id);
+//        if($product->type == 'workshop') {
+//			/* Workshop auto-save features go here */
+//			
+//			update_post_meta($post_id, 'presenter_id', $post_id);
+//		}
+//    }
+//} add_action('save_post', 'workshop_cpt_autosave');

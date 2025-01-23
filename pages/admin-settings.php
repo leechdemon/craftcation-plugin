@@ -24,13 +24,14 @@ function cc_tag_selector() {
 		$ticketTagIDs = explode(',', esc_attr(get_option('cc_ticket_tags')) );
 		$productTags = get_terms( 'product_tag' );
 
+		$tagString = '';
 		foreach($productTags as $productTag) {
 			foreach($ticketTagIDs as $tagID) {
-				if($tagID == $productTag->term_id) { $tagString .= $productTag->name; }
+				if($tagID == $productTag->term_id) { $tagString = $productTag->name; }
 			}
 		}	
 	?>
-	<p>Orders containing products tagged with "<strong><?php echo $tagString; ?></strong>" will be added to the Tickets DB.</p>
+	<p>Tickets will include any orders containing products tagged with "<strong><?php echo $tagString; ?></strong>".</p>
 	<form method="post" action="../includes/options.php">
 		<?php settings_fields( 'cc-ticket-settings-group' ); ?>
 		<?php do_settings_sections( 'cc-ticket-settings-group' ); ?>
@@ -53,6 +54,35 @@ function cc_tag_selector() {
 
 <div class="wrap">
 	<h3>Workshop Options</h3>
+		<?php
+		$workshopTagIDs = explode(',', esc_attr(get_option('cc_workshop_tags')) );
+
+		$tagString = '';
+		foreach($productTags as $productTag) {
+			foreach($workshopTagIDs as $tagID) {
+				if($tagID == $productTag->term_id) { $tagString = $productTag->name; }
+			}
+		}	
+	?>
+	<p>Workshops include any products tagged with "<strong><?php echo $tagString; ?></strong>".</p>
+	<form method="post" action="../includes/options.php">
+		<?php settings_fields( 'cc-workshop-settings-group' ); ?>
+		<?php do_settings_sections( 'cc-workshop-settings-group' ); ?>
+
+		<select id="cc_workshop_tags" name="cc_workshop_tags">
+			<?php
+				echo '<option value="">-- Select Product Tag --</option>';
+
+				$productTags = get_terms( 'product_tag' );
+				foreach($productTags as $tag) {
+					if( $tag->term_id == esc_attr( get_option('cc_workshop_tags') ) ) { $isChecked = " - 	&#10004;"; } else { $isChecked = ''; }
+					echo '<option value="'.$tag->term_id.'">'.$tag->name.$isChecked.'</option>';
+				}
+			?>
+		</select>
+				
+	    <?php submit_button(); ?>
+	</form>
 </div>
 
 <div class="wrap">
