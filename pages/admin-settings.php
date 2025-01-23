@@ -32,7 +32,7 @@ function cc_tag_selector() {
 		}	
 	?>
 	<p>Tickets will include any orders containing products tagged with "<strong><?php echo $tagString; ?></strong>".</p>
-	<form method="post" action="../includes/options.php">
+	<form method="post" action="options.php">
 		<?php settings_fields( 'cc-ticket-settings-group' ); ?>
 		<?php do_settings_sections( 'cc-ticket-settings-group' ); ?>
 
@@ -65,7 +65,7 @@ function cc_tag_selector() {
 		}	
 	?>
 	<p>Workshops include any products tagged with "<strong><?php echo $tagString; ?></strong>".</p>
-	<form method="post" action="../includes/options.php">
+	<form method="post" action="options.php">
 		<?php settings_fields( 'cc-workshop-settings-group' ); ?>
 		<?php do_settings_sections( 'cc-workshop-settings-group' ); ?>
 

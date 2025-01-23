@@ -169,3 +169,9 @@ function cc_shortcode( $atts, $content = "" ) {
 	return ob_get_clean();
 } add_shortcode( 'craftcation', 'cc_shortcode' );
 
+function cc_ticket_options() {
+	register_setting( 'cc-ticket-settings-group', 'cc_ticket_tags' );
+} add_action( 'admin_init', 'cc_ticket_options');
+function cc_workshop_options() {
+	register_setting( 'cc-workshop-settings-group', 'cc_workshop_tags' );
+} add_action( 'admin_init', 'cc_workshop_options');
