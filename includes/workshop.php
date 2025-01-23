@@ -307,12 +307,23 @@ function CSV_Image( $url ) {
 	return explode( ')', explode( '(', $url )[1] )[0];
 }
 function get_workshopSelection() {
+	$workshopTagIDs = explode(',', esc_attr(get_option('cc_workshop_tags')) );
+
+	$workshopTagName = '';
+	$productTags = get_terms( 'product_tag' );
+	foreach($productTags as $productTag) {
+		foreach($workshopTagIDs as $tagID) {
+			if($tagID == $productTag->term_id) { $workshopTagName = $productTag->name; }
+		}
+	}	
+	
 	/* Build list of All Workshops */
 	$args = array(
-//		'type' => 'workshop',
-		'tag' => 'workshop2025',
+//    	'product_tag' => array( 'workshop2025' )
+    	'product_tag' => array( $workshopTagName )
 	);
 	$w = wc_get_products( $args );
+	
 	$workshops = array();
 	foreach( $w as $key => $workshop ) {
 		$workshops[$key]= $workshop->get_data();
