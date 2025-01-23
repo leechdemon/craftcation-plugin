@@ -10,13 +10,14 @@ require_once plugin_dir_path(__FILE__) . 'tools.php';
 
 //require_once plugin_dir_path(__FILE__) . 'includes/db-tickets.php';
 //require_once plugin_dir_path(__FILE__) . 'includes/db-workshops.php';
-require_once plugin_dir_path(__FILE__) . 'includes/db-waitlist.php';
 /* Remove JS? Used for WorkshopDB? (deprecated) */
 //require_once plugin_dir_path(__FILE__) . 'includes/db-workshops-js.php';
 
 require_once plugin_dir_path(__FILE__) . 'includes/cpt-presenter.php';
-require_once plugin_dir_path(__FILE__) . 'includes/cpt-workshop.php';
 require_once plugin_dir_path(__FILE__) . 'includes/cpt-terms.php';
+require_once plugin_dir_path(__FILE__) . 'includes/db-waitlist.php';
+//require_once plugin_dir_path(__FILE__) . 'includes/ticket.php';
+require_once plugin_dir_path(__FILE__) . 'includes/workshop.php';
 
 global $cc_db_version, $cc_workshop_db_version, $cc_waitlist_db_version;
 //$cc_db_version = '1.2.9';
