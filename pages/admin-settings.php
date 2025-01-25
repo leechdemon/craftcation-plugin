@@ -42,8 +42,8 @@ function cc_tag_selector() {
 
 				$productTags = get_terms( 'product_tag' );
 				foreach($productTags as $tag) {
-					if( $tag->term_id == esc_attr( get_option('cc_ticket_tags') ) ) { $isChecked = " - 	&#10004;"; } else { $isChecked = ''; }
-					echo '<option value="'.$tag->term_id.'">'.$tag->name.$isChecked.'</option>';
+					if( $tag->term_id == esc_attr( get_option('cc_ticket_tags') ) ) { $isSelected = ' selected="true"'; $isChecked = " - 	&#10004;"; } else { $isChecked = ''; $isSelected = ''; }
+					echo '<option value="'.$tag->term_id.'"'.$isSelected.'>'.$tag->name.$isChecked.'</option>';
 				}
 			?>
 		</select>
@@ -75,8 +75,8 @@ function cc_tag_selector() {
 
 				$productTags = get_terms( 'product_tag' );
 				foreach($productTags as $tag) {
-					if( $tag->term_id == esc_attr( get_option('cc_workshop_tags') ) ) { $isChecked = " - 	&#10004;"; } else { $isChecked = ''; }
-					echo '<option value="'.$tag->term_id.'">'.$tag->name.$isChecked.'</option>';
+					if( $tag->term_id == esc_attr( get_option('cc_workshop_tags') ) ) { $isSelected = ' selected="true"'; $isChecked = " - 	&#10004;"; } else { $isChecked = ''; $isSelected = ''; }
+					echo '<option value="'.$tag->term_id.'"'.$isSelected.'>'.$tag->name.$isChecked.'</option>';
 				}
 			?>
 		</select>

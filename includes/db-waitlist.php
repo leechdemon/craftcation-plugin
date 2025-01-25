@@ -1,45 +1,58 @@
 <?php 
 require_once plugin_dir_path(__FILE__) . '../craftcation.php';
 
-//global $wpdb, $cc_waitlist_db_version, $cc_waitlist_table_name;
-//$cc_waitlist_table_name = $wpdb->prefix . 'cc_waitlists';
-//
-//function cc_waitlist_install() { // Sets up DB
-//	global $wpdb, $cc_waitlist_db_version, $cc_waitlist_table_name;
-//	
-//	$charset_collate = $wpdb->get_charset_collate();
-//
-//	$sql = "CREATE TABLE $cc_waitlist_table_name (
-//		id mediumint(9) NOT NULL AUTO_INCREMENT,
-//		waitlistNumber mediumint(9) NOT NULL,
-//		waitlistCustomerId mediumint(9) NOT NULL,
-//		purchaseOrderNumber text NOT NULL,
-//		purchaseOrderType text NOT NULL,
-//		purchaseCustomerId mediumint(9) NOT NULL,
-//		paymentOrderNumbers text NOT NULL,
-//		PRIMARY KEY (id)
-//	) $charset_collate;";
-//
-//	require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-//	dbDelta( $sql );
-//
-//	add_option( 'cc_waitlist_db_version', $cc_waitlist_db_version );
-//}
-//function cc_waitlist_insert($orderNumber = '', $customerId = '', $paymentOrderNumbers = '', $orderType = 'waitlist') { // Adds order to DB
-//	global $wpdb, $cc_waitlist_db_version, $cc_waitlist_table_name;
-//	
-//	$wpdb->insert( 
-//		$cc_waitlist_table_name, 
-//		array( 
-//			'waitlistNumber' => $customerId, 
-//			'waitlistCustomerId' => $customerId, 
-//			'purchaseOrderNumber' => $orderNumber, 
-//			'purchaseOrderType' => $orderType, 
-//			'purchaseCustomerId' => $customerId, 
-//			'paymentOrderNumbers' => $paymentOrderNumbers.','.$paymentOrderNumbers,
-//		)
-//	);
-//}
+global $wpdb, $cc_waitlist_db_version, $cc_waitlist_table_name;
+$cc_waitlist_table_name = $wpdb->prefix . 'cc_waitlists';
+
+function cc_waitlist_install() { // Sets up DB
+	global $wpdb, $cc_waitlist_db_version, $cc_waitlist_table_name;
+	
+	$charset_collate = $wpdb->get_charset_collate();
+
+	$sql = "CREATE TABLE $cc_waitlist_table_name (
+		id mediumint(9) NOT NULL AUTO_INCREMENT,
+		workshopId mediumint(9) NOT NULL,
+		customerId mediumint(9) NOT NULL,
+		waitlistDate text NOT NULL,
+		notificationDate text NOT NULL,
+		removalDate text NOT NULL,
+		PRIMARY KEY (id)
+	) $charset_collate;";
+
+	require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+	dbDelta( $sql );
+
+	add_option( 'cc_waitlist_db_version', $cc_waitlist_db_version );
+}
+function cc_waitlist_insert() { // Adds order to DB
+	global $wpdb, $cc_waitlist_db_version, $cc_waitlist_table_name;
+	
+	$wpdb->insert( 
+		$cc_waitlist_table_name, 
+		array( 
+			'workshopId' => $_POST['workshopId'], 
+			'customerId' => $_POST['customerId'], 
+			'waitlistDate' => $_POST['waitlistDate'], 
+			'notificationDate' => $_POST['notificationDate'], 
+			'removalDate' => $_POST['removalDate'],
+		)
+	);
+} add_action( 'wp_ajax_cc_waitlist_insert', 'cc_waitlist_insert' );
+function cc_waitlist_update() { // Adds order to DB
+	global $wpdb, $cc_waitlist_db_version, $cc_waitlist_table_name;
+	
+	$wpdb->insert( 
+		$cc_waitlist_table_name, 
+		array( 
+			'workshopId' => $_POST['workshopId'], 
+			'customerId' => $_POST['customerId'], 
+			'waitlistDate' => $_POST['waitlistDate'], 
+			'notificationDate' => $_POST['notificationDate'], 
+			'removalDate' => $_POST['removalDate'],
+		)
+	);
+} add_action( 'wp_ajax_cc_waitlist_update', 'cc_waitlist_update' );
+
 //function cc_new_user() {
 //	$userprenom = $_POST['prenom'];
 //	$usernom = $_POST['nom'];
@@ -110,64 +123,54 @@ require_once plugin_dir_path(__FILE__) . '../craftcation.php';
 //	
 //	echo $query;
 //} add_action( 'wp_ajax_cc_waitlist_dropTable', 'cc_waitlist_dropTable' );
-//function cc_waitlist_drop() { // Drops table (admin)(broken)
-//	global $wpdb, $cc_waitlist_db_version, $cc_waitlist_table_name;
-//	/* Not working yet */
-//
-//	//	cc_waitlist_install_data();
-////	$sql = "DROP TABLE IF EXISTS $cc_waitlist_table_name";
-////	$wpdb->query($sql); 
-//	
-////	echo json_encode( $response );
-//}
 //function cc_waitlist_displayTable_Filters()  { // Displays buttons at the top. (admin)(broken) )
 //	echo '<div class="wrap">';
 //		echo '<a class="" style="display: inline-flex; padding: 0.5rem 1rem; font-weight: 800; background-color: #444444; border-radius: 2rem;" href="javascript:cc_waitlist_drop();">Drop Table</a>';
 //	echo '</div>';
 //}
-//function cc_waitlist_getTickets($jsonMode = 'false') { // Returns object/JSON of Ticket DB 
-//	global $wpdb, $cc_waitlist_db_version, $cc_waitlist_table_name;
-//	
-//	if($jsonMode == 'true') {
-//		echo json_encode( $wpdb->get_results( "SELECT * FROM " .$cc_waitlist_table_name ) );
-//	}
-//	else {
-//		return $wpdb->get_results( "SELECT * FROM " .$cc_waitlist_table_name );
-//	}
-//}
-//function cc_waitlist_displayTable()  { // Displays Ticket DB
-//	global $wpdb, $cc_waitlist_db_version, $cc_waitlist_table_name;
-//	$waitlists = cc_waitlist_getTickets();
-////	$width = [10,10,10,10,10,10]; 	
-//	
-//	
-//	echo '<div id="cc_db_window" class="cc_db_window" style="width: 100%; height: 50%;">';
-//
-//	/* Display Headers */
-//	echo '<div class="cc_db_header_row cc_db_row">';
-//	foreach( $waitlists[0] as $key => $item) {
-//		if($key == 'id') {
-//			echo '<div class="cc_db_item '.$key.'" style="width: 8%;">'.$key.'</div>';
-//		} else {
-//			echo '<div class="cc_db_item '.$key.'" style="width: 14%;">'.$key.'</div>';
-//		}
-//	}
-//	echo '</div>'; // End header row
-//
-//	/* Display Results */
-//	foreach( $waitlists as $waitlist ) {
-//		/* Get TicketId from DB */
-//		$waitlistId = '';
-//		foreach( $waitlist as $key => $item) { if($key == 'id') $waitlistId = $item; }
-//		echo '<div id="waitlistRow_'.$waitlistId.'" class="cc_db_row">';	
-//		
-//		foreach( $waitlist as $key => $item) {
-//			if($key == 'id') { 
-//				echo '<div class="cc_db_item '.$key.'" style="width: 8%;">';
-//					echo '<button onclick="javascript:cc_waitlist_deleteRow_button(\''.$item.'\');">Delete [x]</button>';
-//			} else {
-//				echo '<div class="cc_db_item '.$key.'" style="width: 14%;">';
-//
+function cc_waitlist_getLists($jsonMode = 'false') { // Returns object/JSON of Ticket DB 
+	global $wpdb, $cc_waitlist_db_version, $cc_waitlist_table_name;
+	
+	if($jsonMode == 'true') {
+		echo json_encode( $wpdb->get_results( "SELECT * FROM " .$cc_waitlist_table_name ) );
+	}
+	else {
+		return $wpdb->get_results( "SELECT * FROM " .$cc_waitlist_table_name );
+	}
+}
+function cc_waitlist_displayTable()  { // Displays Ticket DB
+	global $wpdb, $cc_waitlist_db_version, $cc_waitlist_table_name;
+	$waitlists = cc_waitlist_getLists();
+//	$width = [10,10,10,10,10,10]; 	
+	
+	
+	echo '<div id="cc_db_window" class="cc_db_window" style="width: 100%; height: 50%;">';
+
+	/* Display Headers */
+	echo '<div class="cc_db_header_row cc_db_row">';
+	foreach( $waitlists[0] as $key => $item) {
+		if($key == 'id') {
+			echo '<div class="cc_db_item '.$key.'" style="width: 8%;">'.$key.'</div>';
+		} else {
+			echo '<div class="cc_db_item '.$key.'" style="width: 14%;">'.$key.'</div>';
+		}
+	}
+	echo '</div>'; // End header row
+
+	/* Display Results */
+	foreach( $waitlists as $waitlist ) {
+		/* Get TicketId from DB */
+		$waitlistId = '';
+		foreach( $waitlist as $key => $item) { if($key == 'id') $waitlistId = $item; }
+		echo '<div id="waitlistRow_'.$waitlistId.'" class="cc_db_row">';	
+		
+		foreach( $waitlist as $key => $item) {
+			if($key == 'id') { 
+				echo '<div class="cc_db_item '.$key.'" style="width: 8%;">';
+					echo '<button onclick="javascript:cc_waitlist_deleteRow_button(\''.$item.'\');">Delete [x]</button>';
+			} else {
+				echo '<div class="cc_db_item '.$key.'" style="width: 14%;">';
+
 //				if($key == 'purchaseOrderNumber') { 
 //					echo '<a href="/wp-admin/post.php?post='.$item.'&action=edit">'.$item.'</a>';
 //				} else if($key == 'waitlistCustomerId' or $key == 'purchaseCustomerId') {
@@ -195,18 +198,21 @@ require_once plugin_dir_path(__FILE__) . '../craftcation.php';
 //						echo '<a href="/wp-admin/post.php?post='.$paymentOrderNumber.'&action=edit">'.$paymentOrderNumber.'</a>';
 //					}
 //				} else {
-//					echo $item;
+					echo $item;
 //				}
-//			}
-//
-//			echo '</div>';
-//		}
-//		
-//		echo '</div>';
-//	}
-//	
-//	echo '</div>';
-//}
+			}
+
+			echo '</div>';
+		}
+		
+		echo '</div>';
+	}
+	
+	echo '</div>';
+}
+?>
+
+<?php
 //function cc_waitlist_purchase_action( $order_id ) { // Add Order->DB every time a matching product is in a "Processing" order
 //	$order = wc_get_order($order_id);
 //	$waitlistTagIDs = explode(',', esc_attr(get_option('cc_waitlist_tags')) );
@@ -244,8 +250,8 @@ require_once plugin_dir_path(__FILE__) . '../craftcation.php';
 ////	echo ;
 //	echo $cc_waitlist_table_name;
 ////	$response = $wpdb->get_results( "SELECT * FROM leechdemon_" .$cc_waitlist_table_name );
-//	//	echo cc_waitlist_getTickets('true');
+//	//	echo cc_waitlist_getLists('true');
 ////	Test($response);
 ////	echo json_encode( $response );
-////	echo json_encode( cc_waitlist_getTickets() );
+////	echo json_encode( cc_waitlist_getLists() );
 //}

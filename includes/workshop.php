@@ -1,5 +1,6 @@
 <?php 
 require_once plugin_dir_path(__FILE__) . '../craftcation.php';
+require_once plugin_dir_path(__FILE__) . 'waitlist-js.php';
 
 /* Used on workshop page to link to coordinating presenter */
 function PresenterByID( $atts ) {
@@ -111,9 +112,9 @@ function Process_WorkshopSelectionUpdates() {
 	}
 	
 	/* Process Waitlist changes */
-	if( isset( $_GET['waitlist'] ) ) {
-		$Output .= '<script>console.log("'.$_GET['waitlist'].'");</script>';
-	}
+//	if( isset( $_GET['waitlist'] ) ) {
+//		$Output .= '<script>console.log("'.$_GET['waitlist'].'");</script>';
+//	}
 
 	return $Output;
 } add_shortcode('Process_WorkshopSelectionUpdates', 'Process_WorkshopSelectionUpdates');
@@ -415,7 +416,8 @@ function WorkshopFilterDropdowns( $atts ) {
 	return $Output;
 } add_shortcode('WorkshopFilterDropdowns', 'WorkshopFilterDropdowns');
 function DisplayWaitlistButton( $workshopId ) {
-	$Output = '<a href="?waitlist='.$workshopId.'">Add me to Waitlist</a>';
+	$Output = '<a id="waitlist-icon-'. $workshopId .'-add" href="javascript:cc_waitlist_add_button(\'' .get_current_user_id(). '\', \''.$workshopId.'\');">Add to Waitlist</a>';
+	$Output .= '<a id="waitlist-icon-'. $workshopId .'-remove" style="display: none;" href="javascript:cc_waitlist_remove_button(\'' .get_current_user_id(). '\', \''.$workshopId.'\');">Remove from Waitlist</a>';
 	
 	return $Output;
 }
