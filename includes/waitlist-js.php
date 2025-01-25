@@ -1,36 +1,72 @@
 <script>
-	function cc_waitlist_add_button( customerId, workshopId ) {
-		var today = waitlist_date();
-		
+	function cc_waitlist_add_button( workshopId ) {
 		jQuery.ajax({
 			type: 'POST',
 			url: "<?php echo admin_url('admin-ajax.php'); ?>",
 			data: {
-				"action": "cc_waitlist_insert",
+				"action": "cc_waitlist_getStatus",
 				"workshopId": workshopId,
-				"customerId": customerId,
-				"waitlistDate": today,
+				"customerId": <?php echo get_current_user_id(); ?>,
+				"waitlistDate": '',
 				"notificationDate": '',
 				"removalDate": ''
 			},
 			success: function (data) {
-				document.getElementById( 'waitlist-icon-' + workshopId + '-add' ).style.display = 'none';
-				document.getElementById( 'waitlist-icon-' + workshopId + '-remove' ).style.display = 'block';
+				if( data == 'unlisted' ) {
+					var today = waitlist_dateFormat();
+
+					jQuery.ajax({
+						type: 'POST',
+						url: "<?php echo admin_url('admin-ajax.php'); ?>",
+						data: {
+							"action": "cc_waitlist_insert",
+							"workshopId": workshopId,
+							"customerId": <?php echo get_current_user_id(); ?>,
+							"waitlistDate": today,
+							"notificationDate": '',
+							"removalDate": ''
+						},
+						success: function (data) {
+							document.getElementById( 'waitlist-icon-' + workshopId + '-add' ).style.display = 'none';
+							document.getElementById( 'waitlist-icon-' + workshopId + '-remove' ).style.display = 'block';
+						}
+					});
+				}
+			}
+		});
+		
+		
+	}
+	function cc_waitlist_getStatus_button( workshopId ) {
+		jQuery.ajax({
+			type: 'POST',
+			url: "<?php echo admin_url('admin-ajax.php'); ?>",
+			data: {
+				"action": "cc_waitlist_getStatus",
+				"workshopId": workshopId,
+				"customerId": <?php echo get_current_user_id(); ?>,
+				"waitlistDate": '',
+				"notificationDate": '',
+				"removalDate": ''
+			},
+			success: function (data) {
+				return data;
 			}
 		});
 	}
-	function cc_waitlist_remove_button( customerId, workshopId ) {
-		var today = waitlist_date();
+	function cc_waitlist_remove_button( workshopId ) {
+		var today = waitlist_dateFormat();
+		
+		var waitlistDate = '';
 		
 		jQuery.ajax({
 			type: 'POST',
 			url: "<?php echo admin_url('admin-ajax.php'); ?>",
 			data: {
-				"action": "cc_waitlist_update",
+				"action": "cc_waitlist_remove",
 				"workshopId": workshopId,
-				"customerId": customerId,
-				"waitlistDate": '',
-				"notificationDate": '',
+				"customerId": <?php echo get_current_user_id() ?>,
+				"waitlistDate": waitlistDate,
 				"removalDate": today
 			},
 			success: function (data) {
@@ -40,7 +76,7 @@
 		});
 	}
 	function cc_waitlist_update_button( customerId, workshopId ) {
-		var today = waitlist_date();
+		var today = waitlist_dateFormat();
 		
 		jQuery.ajax({
 			type: 'POST',
@@ -60,7 +96,7 @@
 	}
 	
 	
-	function waitlist_date() {
+	function waitlist_dateFormat() {
 		var today = new Date();
 		var dd = String(today.getDate()).padStart(2, '0');
 		var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!

@@ -38,20 +38,21 @@ function cc_waitlist_insert() { // Adds order to DB
 		)
 	);
 } add_action( 'wp_ajax_cc_waitlist_insert', 'cc_waitlist_insert' );
-function cc_waitlist_update() { // Adds order to DB
+function cc_waitlist_remove() { // Adds order to DB
 	global $wpdb, $cc_waitlist_db_version, $cc_waitlist_table_name;
 	
-	$wpdb->insert( 
+	$wpdb->update( 
 		$cc_waitlist_table_name, 
+		array( 
+			'removalDate' => $_POST['removalDate'],
+		),
 		array( 
 			'workshopId' => $_POST['workshopId'], 
 			'customerId' => $_POST['customerId'], 
-			'waitlistDate' => $_POST['waitlistDate'], 
-			'notificationDate' => $_POST['notificationDate'], 
-			'removalDate' => $_POST['removalDate'],
+			'waitlistDate' => $_POST['waitlistDate'],
 		)
 	);
-} add_action( 'wp_ajax_cc_waitlist_update', 'cc_waitlist_update' );
+} add_action( 'wp_ajax_cc_waitlist_remove', 'cc_waitlist_remove' );
 
 //function cc_new_user() {
 //	$userprenom = $_POST['prenom'];
@@ -128,6 +129,31 @@ function cc_waitlist_update() { // Adds order to DB
 //		echo '<a class="" style="display: inline-flex; padding: 0.5rem 1rem; font-weight: 800; background-color: #444444; border-radius: 2rem;" href="javascript:cc_waitlist_drop();">Drop Table</a>';
 //	echo '</div>';
 //}
+function cc_waitlist_getStatus( $workshopId, $jsonMode = 'true' ) { // Returns object/JSON of individual waitlist item from DB 
+	global $wpdb, $cc_waitlist_db_version, $cc_waitlist_table_name;
+	
+	$results = $wpdb->get_results( "SELECT * FROM " .$cc_waitlist_table_name );
+	
+	$status = "unlisted";
+	foreach($results as $result) {
+		/* If we're looking at the right waitlist item,... */
+		if( $result->customerId == get_current_user_id() && $result->workshipId == $workshopId ) {
+
+			/* determine current Status */
+			if( $result->removalDate != '' ) { $status = "removed"; }
+			else if( $result->notificationDate != '' ) { $status = "notified"; }
+			else { $status = "waitlisted"; }
+			
+		}
+	}
+	if($jsonMode == 'true') {
+		echo json_encode( $status ); 
+	}
+	else {
+//		return $wpdb->get_results( "SELECT * FROM " .$cc_waitlist_table_name. " WHERE( customerId=" . get_current_user_id() . " AND workshopId=" . $workshopId . ")" );
+	}
+	wp_die();
+} add_action( 'wp_ajax_cc_waitlist_getStatus', 'cc_waitlist_getStatus' );
 function cc_waitlist_getLists($jsonMode = 'false') { // Returns object/JSON of Ticket DB 
 	global $wpdb, $cc_waitlist_db_version, $cc_waitlist_table_name;
 	
@@ -209,6 +235,14 @@ function cc_waitlist_displayTable()  { // Displays Ticket DB
 	}
 	
 	echo '</div>';
+}
+function DisplayWaitlistButton( $workshopId ) {
+	$Output = '<a id="waitlist-icon-'. $workshopId .'-add" href="javascript:cc_waitlist_add_button(\''.$workshopId.'\');">Add to Waitlist</a>';
+	$Output .= '<a id="waitlist-icon-'. $workshopId .'-remove" style="display: none;" href="javascript:cc_waitlist_remove_button(\''.$workshopId.'\');">Remove from Waitlist</a>';
+	
+	$Output .= '<a href="javascript:cc_waitlist_getStatus_button(\''.$workshopId.'\');">Get Status</a>';
+	
+	return $Output;
 }
 ?>
 

@@ -1,6 +1,6 @@
 <?php 
 require_once plugin_dir_path(__FILE__) . '../craftcation.php';
-require_once plugin_dir_path(__FILE__) . 'waitlist-js.php';
+//require_once plugin_dir_path(__FILE__) . 'waitlist-js.php';
 
 /* Used on workshop page to link to coordinating presenter */
 function PresenterByID( $atts ) {
@@ -110,11 +110,6 @@ function Process_WorkshopSelectionUpdates() {
 			WorkshopSelection_RefundItems( $refund_req );
 		}	
 	}
-	
-	/* Process Waitlist changes */
-//	if( isset( $_GET['waitlist'] ) ) {
-//		$Output .= '<script>console.log("'.$_GET['waitlist'].'");</script>';
-//	}
 
 	return $Output;
 } add_shortcode('Process_WorkshopSelectionUpdates', 'Process_WorkshopSelectionUpdates');
@@ -190,6 +185,8 @@ function WorkshopSelection_RefundItems( $refund_req ) {
 }
 
 function DisplayWorkshopSchedule( $atts ) {
+	require_once plugin_dir_path(__FILE__) . 'waitlist-js.php';
+	
 	/* if we have a user... */
 	if( wp_get_current_user()->id > 0 ) {
 		/* Build list of workshopsSelection */
@@ -270,6 +267,8 @@ function DisplayWorkshopSchedule( $atts ) {
 //						$Output .= '<div id="workshop_notes_item_'.$workshop['id'].'" class="workshop_notes_'.$s.'"'.$IsSelected.'>'.substr($workshop['name'],0,1).' - '.$workshop['stock_quantity'].' spaces</div>';
 						$Output .= '<div id="workshop_notes_item_'.$workshop['id'].'" class="workshop_notes_'.$s.'"'.$IsSelected.'>';
 						if( $workshop['stock_quantity'] < 1 ) {
+							
+							/* Conditionally display the Waitlist button */
 							$Output .= DisplayWaitlistButton( $workshop['id'] );
 						}
 						$Output .= '</div>';
@@ -352,6 +351,9 @@ function get_workshopSelection() {
 	);
 	$orders = wc_get_orders($args);
 	
+	/* get Waitlists */
+	$waitlists = cc_waitlist_getLists();
+
 	/* For each workshop item (variable, large amount (100+?) */
 	$workshopSelection = array();
 	foreach($workshops as $w => $workshop) {
@@ -389,9 +391,21 @@ function get_workshopSelection() {
 				}
 			}
 		}
+		foreach( $waitlists as $waitlist ) {
+			/* If customer=waitlist=workshop match... */
+			if( $waitlist->customerId == get_current_user_id() && $waitlist->workshopId == $workshops[$w]['id'] ) {
+
+				/* If this item hasn't been removed... */
+				if( $waitlist->removalDate == '' ) {
+					/* Add to the waitlistSelection */
+					$waitlistSelection []= $workshops[$w]['id'];
+				}
+			}
+		}
 	}
 	arsort($workshopSelection);
-	return [ $workshops, $slots, $orders, $workshopSelection ];
+	
+	return [ $workshops, $slots, $orders, $workshopSelection, $waitlistSelection ];
 }
 function WorkshopFilterDropdowns( $atts ) {
 	$Output = '';
@@ -415,12 +429,6 @@ function WorkshopFilterDropdowns( $atts ) {
 	
 	return $Output;
 } add_shortcode('WorkshopFilterDropdowns', 'WorkshopFilterDropdowns');
-function DisplayWaitlistButton( $workshopId ) {
-	$Output = '<a id="waitlist-icon-'. $workshopId .'-add" href="javascript:cc_waitlist_add_button(\'' .get_current_user_id(). '\', \''.$workshopId.'\');">Add to Waitlist</a>';
-	$Output .= '<a id="waitlist-icon-'. $workshopId .'-remove" style="display: none;" href="javascript:cc_waitlist_remove_button(\'' .get_current_user_id(). '\', \''.$workshopId.'\');">Remove from Waitlist</a>';
-	
-	return $Output;
-}
 //function workshop_cpt_autosave($post_id) {
 //    if (get_post_type($post_id) == 'product') {
 //		$product = wc_get_product($post_id);
