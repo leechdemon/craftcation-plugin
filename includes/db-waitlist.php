@@ -292,42 +292,42 @@ function cc_waitlist_process( $workshopId ) {
 	/* Notify the next user */
 	cc_waitlist_notify( $customerId, $workshopId, $waitlistDate, $notificationDate );
 
-	schedule_my_event();
+//	schedule_my_event();
 
 
 } add_action( 'wp_ajax_cc_waitlist_process', 'cc_waitlist_process' );
 
 
 // Hook into the WordPress init action to schedule the event
-function schedule_my_event() {
-    if ( ! wp_next_scheduled( 'cc_waitlist_update_hook' ) ) {
-        wp_schedule_event( time(), 'five_minutes', 'cc_waitlist_update_hook' );
-    }
-}
-
-// Define the custom interval for 5 minutes
-function add_five_minutes_interval( $schedules ) {
-    $schedules['five_minutes'] = array(
-        'interval' => 5 * 60,  // 5 minutes in seconds
-        'display'  => __( 'Once every 5 minutes' ),
-    );
-    return $schedules;
-} add_filter( 'cron_schedules', 'add_five_minutes_interval' );
-
-// Hook your callback function to the scheduled event
-function my_custom_event_callback() {
-    // Your code to execute every 5 minutes
-    // For example, logging a message:
-    error_log( 'Custom event triggered at ' . current_time( 'mysql' ) );
-} add_action( 'cc_waitlist_update_hook', 'my_custom_event_callback' );
-
-// Clear the scheduled event upon deactivation
-function deactivate_my_event() {
-    $timestamp = wp_next_scheduled( 'cc_waitlist_update_hook' );
-    if ( $timestamp ) {
-        wp_unschedule_event( $timestamp, 'cc_waitlist_update_hook' );
-    }
-} register_deactivation_hook( __FILE__, 'deactivate_my_event' );
+//function schedule_my_event() {
+//    if ( ! wp_next_scheduled( 'cc_waitlist_update_hook' ) ) {
+//        wp_schedule_event( time(), 'five_minutes', 'cc_waitlist_update_hook' );
+//    }
+//}
+//
+//// Define the custom interval for 5 minutes
+//function add_five_minutes_interval( $schedules ) {
+//    $schedules['five_minutes'] = array(
+//        'interval' => 5 * 60,  // 5 minutes in seconds
+//        'display'  => __( 'Once every 5 minutes' ),
+//    );
+//    return $schedules;
+//} add_filter( 'cron_schedules', 'add_five_minutes_interval' );
+//
+//// Hook your callback function to the scheduled event
+//function my_custom_event_callback() {
+//    // Your code to execute every 5 minutes
+//    // For example, logging a message:
+//    error_log( 'Custom event triggered at ' . current_time( 'mysql' ) );
+//} add_action( 'cc_waitlist_update_hook', 'my_custom_event_callback' );
+//
+//// Clear the scheduled event upon deactivation
+//function deactivate_my_event() {
+//    $timestamp = wp_next_scheduled( 'cc_waitlist_update_hook' );
+//    if ( $timestamp ) {
+//        wp_unschedule_event( $timestamp, 'cc_waitlist_update_hook' );
+//    }
+//} register_deactivation_hook( __FILE__, 'deactivate_my_event' );
 
 
 ?>
