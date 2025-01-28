@@ -176,7 +176,7 @@ function WorkshopSelection_RefundItems( $refund_req ) {
 //						));
 						
 						if( $restockItems == false ) {
-							echo '<script>cc_waitlist_notification("'.$item['product_id'].'");</script>';
+							cc_waitlist_process( $item['product_id'] );
 						}
 
 					}
@@ -329,7 +329,6 @@ function get_workshopSelection() {
 	
 	/* Build list of All Workshops */
 	$args = array(
-//    	'product_tag' => array( 'workshop2025' )
     	'product_tag' => array( $workshopTagName )
 	);
 	$w = wc_get_products( $args );

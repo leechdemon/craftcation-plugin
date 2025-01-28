@@ -53,6 +53,42 @@ function cc_waitlist_remove() { // Adds order to DB
 		)
 	);
 } add_action( 'wp_ajax_cc_waitlist_remove', 'cc_waitlist_remove' );
+function cc_waitlist_notify( $customerId, $workshopId, $waitlistDate, $notificationDate) { // Adds order to DB
+	global $wpdb, $cc_waitlist_db_version, $cc_waitlist_table_name;
+		
+	$wpdb->update( 
+		$cc_waitlist_table_name, 
+		array( 
+			'notificationDate' => $notificationDate,
+		),
+		array( 
+			'workshopId' => $workshopId, 
+			'customerId' => $customerId, 
+			'waitlistDate' => $waitlistDate,
+		)
+	);
+	
+	$user = new WP_User( $customerId );
+	$workshop = wc_get_product( $workshopId );
+	$workshopTitle = $workshop->get_name();
+	$workshopImage = $workshop->get_image();
+	
+	$adminEmail = get_option( 'admin_email' ) ;
+	$header = array(
+		'MIME-Version: 1.0',
+		'Content-type: text/html; charset=utf-8',
+		"From: $adminEmail",
+	);
+	$subject = 'A Craftcation Workshop you waitlisted is available';
+	$message = '<h2>A Workshop that you waitlisted for, '.$workshopTitle.', the Craftcation Conference has become available!</h2>';
+	$message .= '<div style="width: 50%; margin: 2rem; border: solid 2px black;">';
+		$message .= '<div style="width: 25%;">'.$workshopImage.'</div>';
+		$message .= '<div style="width: 75%; font-weight: 800; font-size: larger;">'.$workshopTitle.'</div>';
+	$message .= '</div>';
+	$message .= '<a style="display: block;" href="https://www.craftcationconference.com/account/workshops?waitlist='.$workshopId.'">Update Workshops</a></div>';
+
+	wp_mail( $user->user_email, $subject, $message, $header );	
+} add_action( 'wp_ajax_cc_waitlist_notify', 'cc_waitlist_notify' );
 
 //function cc_new_user() {
 //	$userprenom = $_POST['prenom'];
@@ -190,7 +226,7 @@ function cc_waitlist_displayTable()  { // Displays Ticket DB
 		/* Get TicketId from DB */
 		$waitlistId = '';
 		foreach( $waitlist as $key => $item) { if($key == 'id') $waitlistId = $item; }
-		echo '<div id="waitlistRow_'.$waitlistId.'" class="cc_db_row">';	
+		echo '<div id="waitlistRow_'.$waitlistId.'" class="cc_db_row'.$removed.'">';	
 		
 		foreach( $waitlist as $key => $item) {
 			/* Row Display Logic */
@@ -219,6 +255,10 @@ function cc_waitlist_displayTable()  { // Displays Ticket DB
 
 			echo '</div>';
 		}
+		if( $waitlist->removalDate != '' ) {
+//			echo "a";
+			echo "<script>document.getElementById('waitlistRow_".$waitlist->id."').classList.add('removed')</script>";
+		}
 		
 		echo '</div>';
 	}
@@ -231,46 +271,64 @@ function DisplayWaitlistButton( $workshopId ) {
 	
 	return $Output;
 }
-function cc_waitlist_process( $workshopId ) {
+function cc_waitlist_getNext( $workshopId ) {
 	$response = cc_waitlist_getLists();
 	foreach( $response as $waitlistItem ) {
 		if( $waitlistItem->workshopId == $workshopId && $waitlistItem->removalDate == '' ) {
 			$ThisList []= $waitlistItem;
 		}
 	}
-	
-	$user = new WP_User( $ThisList[0]->customerId );
-	$subject = 'A Craftcation Workshop you waitlisted is available';
-	$message = 'message here';
-	$message = '<a href="https://www.craftcationconference.com/account/workshops">Update Workshops</a>';
-//	$adminEmail = get_info( 'admin_email' ) ;
-	$adminEmail = 'testuser@craftcationconference.com' ;
-	$header = array(
-		'MIME-Version' => '1.0',
-		'Content-type' => ' text/html; charset=utf-8',
-		'From' => $adminEmail,
-	);
-	wp_mail( $user->user_email, $subject, $message );
-	cc_waitlist_contact( $workshopId );
-	
-//	echo json_encode( $ThisList[0]->customerId );
-//	return $response;
+	return $ThisList[0];
 }
-function cc_waitlist_contact() { // Adds order to DB
-	global $wpdb, $cc_waitlist_db_version, $cc_waitlist_table_name;
-			
-	$wpdb->update( 
-		$cc_waitlist_table_name, 
-		array( 
-			'notificationDate' => $_POST['notificationDate'],
-		),
-		array( 
-			'workshopId' => $_POST['workshopId'], 
-			'customerId' => $_POST['customerId'], 
-			'waitlistDate' => $_POST['waitlistDate'],
-		)
-	);
-} add_action( 'wp_ajax_cc_waitlist_contact', 'cc_waitlist_contact' );
+function cc_waitlist_process( $workshopId ) {
+	date_default_timezone_set('America/Detroit');
+	$notificationDate = date( 'm/d/Y H:i:s', time() );
+	
+	/* Determine the next user */
+	$nextCustomerRow = cc_waitlist_getNext( $workshopId );
+	$customerId = $nextCustomerRow->customerId;
+	$waitlistDate = $nextCustomerRow->waitlistDate;
+	
+	/* Notify the next user */
+	cc_waitlist_notify( $customerId, $workshopId, $waitlistDate, $notificationDate );
+
+	schedule_my_event();
+
+
+} add_action( 'wp_ajax_cc_waitlist_process', 'cc_waitlist_process' );
+
+
+// Hook into the WordPress init action to schedule the event
+function schedule_my_event() {
+    if ( ! wp_next_scheduled( 'cc_waitlist_update_hook' ) ) {
+        wp_schedule_event( time(), 'five_minutes', 'cc_waitlist_update_hook' );
+    }
+}
+
+// Define the custom interval for 5 minutes
+function add_five_minutes_interval( $schedules ) {
+    $schedules['five_minutes'] = array(
+        'interval' => 5 * 60,  // 5 minutes in seconds
+        'display'  => __( 'Once every 5 minutes' ),
+    );
+    return $schedules;
+} add_filter( 'cron_schedules', 'add_five_minutes_interval' );
+
+// Hook your callback function to the scheduled event
+function my_custom_event_callback() {
+    // Your code to execute every 5 minutes
+    // For example, logging a message:
+    error_log( 'Custom event triggered at ' . current_time( 'mysql' ) );
+} add_action( 'cc_waitlist_update_hook', 'my_custom_event_callback' );
+
+// Clear the scheduled event upon deactivation
+function deactivate_my_event() {
+    $timestamp = wp_next_scheduled( 'cc_waitlist_update_hook' );
+    if ( $timestamp ) {
+        wp_unschedule_event( $timestamp, 'cc_waitlist_update_hook' );
+    }
+} register_deactivation_hook( __FILE__, 'deactivate_my_event' );
+
 
 ?>
 

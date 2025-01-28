@@ -27,6 +27,34 @@
 			}
 		});
 	}
+	function cc_waitlist_getNext( workshopId, callback ) {
+		jQuery.ajax({
+			type: 'POST',
+			url: "<?php echo admin_url('admin-ajax.php'); ?>",
+			data: {
+				"action": "cc_waitlist_getNext",
+				"workshopId": workshopId,
+				"customerId": <?php echo get_current_user_id(); ?>,
+				"waitlistDate": '',
+				"notificationDate": '',
+				"removalDate": ''
+			},
+			success: function ( data ) {
+//				var status = JSON.parse(data);
+//				if( status == "unlisted" ) {
+//					document.getElementById( 'waitlist-icon-' + workshopId + '-add' ).style.display = 'block';
+//					document.getElementById( 'waitlist-icon-' + workshopId + '-remove' ).style.display = 'none';
+//				} else if (status != "" ) {
+//					document.getElementById( 'waitlist-icon-' + workshopId + '-add' ).style.display = 'none';
+//					document.getElementById( 'waitlist-icon-' + workshopId + '-remove' ).style.display = 'block';
+//				}
+				
+				if( callback ) {
+					eval(callback + "( " +workshopId+ ", " +data+ ");" );
+				}
+			}
+		});
+	}
 	function cc_waitlist_getStatus( workshopId, callback ) {
 		jQuery.ajax({
 			type: 'POST',
@@ -97,22 +125,40 @@
 			}
 		});
 	}
-	function cc_waitlist_notification( workshopId ) {
+	function cc_waitlist_process( workshopId ) {		
+		jQuery.ajax({
+			type: 'POST',
+			url: "<?php echo admin_url('admin-ajax.php'); ?>",
+			data: {
+				"action": "cc_waitlist_process",
+				"workshopId": workshopId,
+				"customerId": '',
+				"waitlistDate": '',
+				"notificationDate": '',
+				"removalDate": ''
+			},
+			success: function (data) {
+				window.location.reload();
+			}
+		});
+	}
+	function cc_waitlist_notify( workshopId, customerId, waitlistDate ) {
 		var today = waitlist_dateFormat();
 		
 		jQuery.ajax({
 			type: 'POST',
 			url: "<?php echo admin_url('admin-ajax.php'); ?>",
 			data: {
-				"action": "cc_waitlist_update",
+				"action": "cc_waitlist_notify",
 				"workshopId": workshopId,
-//				"customerId": customerId,
-				"waitlistDate": today,
+				"customerId": customerId,
+				"waitlistDate": waitlistDate,
 				"notificationDate": today,
-				"removalDate": today
+				"removalDate": ''
 			},
 			success: function (data) {
-//				window.location.reload();
+//				console.log( data );
+				window.location.reload();
 			}
 		});
 	}
