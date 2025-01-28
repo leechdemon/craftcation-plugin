@@ -40,7 +40,7 @@ function cc_waitlist_insert() { // Adds order to DB
 } add_action( 'wp_ajax_cc_waitlist_insert', 'cc_waitlist_insert' );
 function cc_waitlist_remove() { // Adds order to DB
 	global $wpdb, $cc_waitlist_db_version, $cc_waitlist_table_name;
-	
+			
 	$wpdb->update( 
 		$cc_waitlist_table_name, 
 		array( 
@@ -101,17 +101,15 @@ function cc_waitlist_remove() { // Adds order to DB
 //	/* Now that we have our user, buy a ticket. */ 
 //	cc_waitlist_insert('', $user_id, '');
 //} add_action( 'wp_ajax_cc_new_user', 'cc_new_user' );
-//function cc_waitlist_deleteRow() { // Deletes row from DB matching "Id".
-//	global $wpdb, $cc_waitlist_table_name;
-//	require_once plugin_dir_path(__FILE__) . '../craftcation.php';
-//	
-//	$ThisThing = $wpdb->delete( 
-//		$cc_waitlist_table_name, 
-//		array( 
-//			'id' => $_POST['element_id'], 
-//		)
-//	);
-//} add_action( 'wp_ajax_cc_waitlist_deleteRow', 'cc_waitlist_deleteRow' );
+function cc_waitlist_deleteRow() { // Deletes row from DB matching "Id".
+	global $wpdb, $cc_waitlist_db_version, $cc_waitlist_table_name;	
+	$wpdb->delete( 
+		$cc_waitlist_table_name, 
+		array( 
+			'id' => $_POST['id'], 
+		)
+	);
+} add_action( 'wp_ajax_cc_waitlist_deleteRow', 'cc_waitlist_deleteRow' );
 //function cc_waitlist_dropTable() { // Truncates the entire table.
 //	global $wpdb, $cc_waitlist_table_name;
 ////	echo $cc_waitlist_table_name;
@@ -129,29 +127,25 @@ function cc_waitlist_remove() { // Adds order to DB
 //		echo '<a class="" style="display: inline-flex; padding: 0.5rem 1rem; font-weight: 800; background-color: #444444; border-radius: 2rem;" href="javascript:cc_waitlist_drop();">Drop Table</a>';
 //	echo '</div>';
 //}
-function cc_waitlist_getStatus( $workshopId, $jsonMode = 'true' ) { // Returns object/JSON of individual waitlist item from DB 
+function cc_waitlist_getStatus() { // Returns object/JSON of individual waitlist item from DB 
 	global $wpdb, $cc_waitlist_db_version, $cc_waitlist_table_name;
 	
 	$results = $wpdb->get_results( "SELECT * FROM " .$cc_waitlist_table_name );
 	
 	$status = "unlisted";
-	foreach($results as $result) {
-		/* If we're looking at the right waitlist item,... */
-		if( $result->customerId == get_current_user_id() && $result->workshipId == $workshopId ) {
+	if( $results[0]->customerId ) {
+		foreach($results as $result) {
+			/* If we're looking at the right waitlist item,... */
+			if( $result->customerId == get_current_user_id() && $result->workshopId == $_POST['workshopId'] ) {
 
-			/* determine current Status */
-			if( $result->removalDate != '' ) { $status = "removed"; }
-			else if( $result->notificationDate != '' ) { $status = "notified"; }
-			else { $status = "waitlisted"; }
-			
+				/* determine current Status */
+				if( $result->removalDate == '' ) { $status = $result->waitlistDate; }
+//				else if( $result->notificationDate != '' ) { $status = "notified"; }
+//				else { $status = $result->waitlistDate; }
+			}
 		}
 	}
-	if($jsonMode == 'true') {
-		echo json_encode( $status ); 
-	}
-	else {
-//		return $wpdb->get_results( "SELECT * FROM " .$cc_waitlist_table_name. " WHERE( customerId=" . get_current_user_id() . " AND workshopId=" . $workshopId . ")" );
-	}
+	echo json_encode( $status );
 	wp_die();
 } add_action( 'wp_ajax_cc_waitlist_getStatus', 'cc_waitlist_getStatus' );
 function cc_waitlist_getLists($jsonMode = 'false') { // Returns object/JSON of Ticket DB 
@@ -167,8 +161,6 @@ function cc_waitlist_getLists($jsonMode = 'false') { // Returns object/JSON of T
 function cc_waitlist_displayTable()  { // Displays Ticket DB
 	global $wpdb, $cc_waitlist_db_version, $cc_waitlist_table_name;
 	$waitlists = cc_waitlist_getLists();
-//	$width = [10,10,10,10,10,10]; 	
-	
 	
 	echo '<div id="cc_db_window" class="cc_db_window" style="width: 100%; height: 50%;">';
 
@@ -176,9 +168,19 @@ function cc_waitlist_displayTable()  { // Displays Ticket DB
 	echo '<div class="cc_db_header_row cc_db_row">';
 	foreach( $waitlists[0] as $key => $item) {
 		if($key == 'id') {
-			echo '<div class="cc_db_item '.$key.'" style="width: 8%;">'.$key.'</div>';
+			echo '<div style="text-align: center;" class="cc_db_item '.$key.'">'.$key.'</div>';
+		} else if($key == 'customerId') {
+			echo '<div style="text-align: center;" class="cc_db_item '.$key.'">User</div>';
+		} else if($key == 'workshopId') {
+			echo '<div style="text-align: center;" class="cc_db_item '.$key.'">Workshop</div>';
+		} else if($key == 'waitlistDate') {
+			echo '<div style="text-align: center;" class="cc_db_item '.$key.'">Waitlist Date</div>';
+		} else if($key == 'notificationDate') {
+			echo '<div style="text-align: center;" class="cc_db_item '.$key.'">Notification Date</div>';
+		} else if($key == 'removalDate') {
+			echo '<div style="text-align: center;" class="cc_db_item '.$key.'">Removal Date</div>';
 		} else {
-			echo '<div class="cc_db_item '.$key.'" style="width: 14%;">'.$key.'</div>';
+			echo '<div class="cc_db_item '.$key.'">'.$key.'</div>';
 		}
 	}
 	echo '</div>'; // End header row
@@ -191,41 +193,28 @@ function cc_waitlist_displayTable()  { // Displays Ticket DB
 		echo '<div id="waitlistRow_'.$waitlistId.'" class="cc_db_row">';	
 		
 		foreach( $waitlist as $key => $item) {
+			/* Row Display Logic */
 			if($key == 'id') { 
-				echo '<div class="cc_db_item '.$key.'" style="width: 8%;">';
+				echo '<div class="cc_db_item '.$key.'">';
 					echo '<button onclick="javascript:cc_waitlist_deleteRow_button(\''.$item.'\');">Delete [x]</button>';
+			} else if($key == 'workshopId') { 
+				echo '<div class="cc_db_item '.$key.'">';
+					$workshop = wc_get_product( $item );
+					$workshopImage = $workshop->get_image();
+					$workshopName = $workshop->get_name();
+					$url = '/wp-admin/post.php?action=edit&classic-editor&post='.$item;
+					echo '<a href="'.$url.'">'.$workshopImage.'</a>';
+					echo '<a href="'.$url.'">'.$workshopName.'</a>';
+			} else if($key == 'customerId') { 
+				echo '<div class="cc_db_item '.$key.'">';
+					$user = new WP_User( $item );
+//					echo get_avatar( $user->user_email );
+					$url = '/wp-admin/edit.php?s&post_status=all&post_type=shop_order&action=-1&m=0&filter_action=Filter&paged=1&action2=-1&_customer_user='.$user->id;
+					echo '<a href="'.$url.'">'.get_avatar( $user->user_email ).'</a>';
+					echo '<a href="'.$url.'">'.$user->first_name.' '.$user->last_name.'<span class="cc_admin_waitlist_email">('.$user->user_email.')</sspan></a>';
 			} else {
-				echo '<div class="cc_db_item '.$key.'" style="width: 14%;">';
-
-//				if($key == 'purchaseOrderNumber') { 
-//					echo '<a href="/wp-admin/post.php?post='.$item.'&action=edit">'.$item.'</a>';
-//				} else if($key == 'waitlistCustomerId' or $key == 'purchaseCustomerId') {
-//					$prettyname = $item;
-//					$first = get_userdata( $item )->first_name;
-//					$last = get_userdata( $item )->last_name;
-//					
-//					if($first && $last) {
-//						$prettyname = $first .' '. $last;
-//					}
-//					else {
-//						if($first) { $prettyname = $first; }
-//						if($last) { $prettyname = $last; }
-//					}
-//					
-//					echo '<img src="'.get_avatar_url( $item ).'" style="height: 100%; margin-right: 0.5rem;">';
-//					echo '<a href="/wp-admin/user-edit.php?user_id='.$item.'" style="vertical-align: super;">'.$prettyname.'</a>';
-//				} else if($key == 'paymentOrderNumbers') {
-//					$paymentOrderNumbers = explode(',', $item);
-//
-//					$p = 0;
-//					foreach( $paymentOrderNumbers as $paymentOrderNumber ) {
-//						if( $p != 0 ) { echo ', '; } else { $p++; }
-//
-//						echo '<a href="/wp-admin/post.php?post='.$paymentOrderNumber.'&action=edit">'.$paymentOrderNumber.'</a>';
-//					}
-//				} else {
+				echo '<div class="cc_db_item '.$key.'">';
 					echo $item;
-//				}
 			}
 
 			echo '</div>';
@@ -237,13 +226,52 @@ function cc_waitlist_displayTable()  { // Displays Ticket DB
 	echo '</div>';
 }
 function DisplayWaitlistButton( $workshopId ) {
-	$Output = '<a id="waitlist-icon-'. $workshopId .'-add" href="javascript:cc_waitlist_add_button(\''.$workshopId.'\');">Add to Waitlist</a>';
+	$Output = '<a id="waitlist-icon-'. $workshopId .'-add" style="display: block;" href="javascript:cc_waitlist_add_button(\''.$workshopId.'\');">Add to Waitlist</a>';
 	$Output .= '<a id="waitlist-icon-'. $workshopId .'-remove" style="display: none;" href="javascript:cc_waitlist_remove_button(\''.$workshopId.'\');">Remove from Waitlist</a>';
-	
-	$Output .= '<a href="javascript:cc_waitlist_getStatus_button(\''.$workshopId.'\');">Get Status</a>';
 	
 	return $Output;
 }
+function cc_waitlist_process( $workshopId ) {
+	$response = cc_waitlist_getLists();
+	foreach( $response as $waitlistItem ) {
+		if( $waitlistItem->workshopId == $workshopId && $waitlistItem->removalDate == '' ) {
+			$ThisList []= $waitlistItem;
+		}
+	}
+	
+	$user = new WP_User( $ThisList[0]->customerId );
+	$subject = 'A Craftcation Workshop you waitlisted is available';
+	$message = 'message here';
+	$message = '<a href="https://www.craftcationconference.com/account/workshops">Update Workshops</a>';
+//	$adminEmail = get_info( 'admin_email' ) ;
+	$adminEmail = 'testuser@craftcationconference.com' ;
+	$header = array(
+		'MIME-Version' => '1.0',
+		'Content-type' => ' text/html; charset=utf-8',
+		'From' => $adminEmail,
+	);
+	wp_mail( $user->user_email, $subject, $message );
+	cc_waitlist_contact( $workshopId );
+	
+//	echo json_encode( $ThisList[0]->customerId );
+//	return $response;
+}
+function cc_waitlist_contact() { // Adds order to DB
+	global $wpdb, $cc_waitlist_db_version, $cc_waitlist_table_name;
+			
+	$wpdb->update( 
+		$cc_waitlist_table_name, 
+		array( 
+			'notificationDate' => $_POST['notificationDate'],
+		),
+		array( 
+			'workshopId' => $_POST['workshopId'], 
+			'customerId' => $_POST['customerId'], 
+			'waitlistDate' => $_POST['waitlistDate'],
+		)
+	);
+} add_action( 'wp_ajax_cc_waitlist_contact', 'cc_waitlist_contact' );
+
 ?>
 
 <?php

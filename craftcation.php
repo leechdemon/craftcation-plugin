@@ -10,8 +10,6 @@ require_once plugin_dir_path(__FILE__) . 'tools.php';
 
 //require_once plugin_dir_path(__FILE__) . 'includes/db-tickets.php';
 //require_once plugin_dir_path(__FILE__) . 'includes/db-workshops.php';
-/* Remove JS? Used for WorkshopDB? (deprecated) */
-//require_once plugin_dir_path(__FILE__) . 'includes/db-workshops-js.php';
 
 require_once plugin_dir_path(__FILE__) . 'includes/cpt-presenter.php';
 require_once plugin_dir_path(__FILE__) . 'includes/cpt-terms.php';

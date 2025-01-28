@@ -103,7 +103,7 @@ function Process_WorkshopSelectionUpdates() {
 		
 		/* Add New Items */
 		if( $hasItems ) {
-			WorkshopSelection_AddOrder( $order_req );
+//			WorkshopSelection_AddOrder( $order_req );
 		}
 		/* Refund Old Items */
 		if( $hasRefunds ) {
@@ -167,13 +167,17 @@ function WorkshopSelection_RefundItems( $refund_req ) {
 
 						/* Refund it */
 						$line_items[ $item_id ] = array( 'qty' => 1, );
-						$refund = wc_create_refund( array(
-//							'amount'         => 0,
-							'reason'         => '',
-							'order_id'       => $o,
-							'line_items'     => $line_items,
-							'restock_items'  => $restockItems,
-						));	
+//						$refund = wc_create_refund( array(
+////							'amount'         => 0,
+//							'reason'         => '',
+//							'order_id'       => $o,
+//							'line_items'     => $line_items,
+//							'restock_items'  => $restockItems,
+//						));
+						
+						if( $restockItems == false ) {
+							echo '<script>cc_waitlist_notification("'.$item['product_id'].'");</script>';
+						}
 
 					}
 					
@@ -195,6 +199,7 @@ function DisplayWorkshopSchedule( $atts ) {
 		$slots = $w[1];
 		$orders = $w[2];
 		$workshopSelection = $w[3];
+		$waitlistSelection = $w[4];
 		
 		/* Display Things */
 		/* Display Things */
@@ -296,6 +301,10 @@ function DisplayWorkshopSchedule( $atts ) {
 			<input type="hidden" name="order" id="order" value="order">
 			<input type="submit" value="Save Workshop Selections" class="btn">
 		</form>';
+		
+		foreach( $waitlistSelection as $waitlist ) {
+			$Output .= "<script>cc_waitlist_getStatus(".$waitlist.");</script>";
+		}
 
 		return $Output;				
 	}
@@ -309,6 +318,7 @@ function CSV_Image( $url ) {
 function get_workshopSelection() {
 	$workshopTagIDs = explode(',', esc_attr(get_option('cc_workshop_tags')) );
 
+	/* I'm not sure why this is better thanjust using the workshop tags from above. Maybe if the tag was deleted? But this is pre-release, so probably not. Maybe to remove typos, or to have access to the tag, IE "getTagBy(cc_workshop_tags)"? */
 	$workshopTagName = '';
 	$productTags = get_terms( 'product_tag' );
 	foreach($productTags as $productTag) {
