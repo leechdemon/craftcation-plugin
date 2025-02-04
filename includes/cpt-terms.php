@@ -40,45 +40,45 @@ function WSCategory_Taxonomy() {
 		register_taxonomy($Lower,array('presenter','workshop', 'product'),$items);
 	}
 } add_action( 'init', 'WSCategory_Taxonomy', 10 );
-function Craft_Taxonomy() {
-	if(!taxonomy_exists('craft')) {
-		$Display = 'Craft';
-	//	$Displays = $Display;
-		$Displays = $Display . 's';
-		$Lower = 'craft';
-	//	$Lowers = $Lower;
-		$Lowers = $Lower . 's';
-
-		$labels = array(
-			'name' => _x( $Displays, 'taxonomy general name' ),
-			'singular_name' => _x( $Display, 'taxonomy singular name' ),
-			'search_items' =>  __( 'Search ' .$Displays ),
-			'all_items' => __( 'All '.$Displays ),
-			'parent_item' => __( 'Parent '.$Display ), 
-			'parent_item_colon' => __( 'Parent '.$Display.':' ),
-			'edit_item' => __( 'Edit '.$Display ), 
-			'update_item' => __( 'Update '.$Display ),
-			'add_new_item' => __( 'Add New '.$Display ),
-			'new_item_name' => __( 'New '.$Display.' Name' ),
-			'menu_name' => __( $Displays ),
-		);
-
-		$items = array(
-			'hierarchical' => true,
-			'labels' => $labels,
-			'show_ui' => true,
-			'show_in_rest' => true,
-			'show_admin_column' => true,
-			'query_var' => false,
-			'has_archive' => true,
-			'rewrite' => array('slug' => $Lower,'with_front' => false),
-//			'rewrite' => array('slug' => 'workshops/'.$Lower,'with_front' => false),
-//			'rewrite' => array('slug' => 'workshops','with_front' => false),
-		);
-
-		register_taxonomy($Lower,array('presenter','workshop', 'product'),$items);
-	}
-} add_action( 'init', 'Craft_Taxonomy', 10 );
+//function Craft_Taxonomy() {
+//	if(!taxonomy_exists('craft')) {
+//		$Display = 'Craft';
+//	//	$Displays = $Display;
+//		$Displays = $Display . 's';
+//		$Lower = 'craft';
+//	//	$Lowers = $Lower;
+//		$Lowers = $Lower . 's';
+//
+//		$labels = array(
+//			'name' => _x( $Displays, 'taxonomy general name' ),
+//			'singular_name' => _x( $Display, 'taxonomy singular name' ),
+//			'search_items' =>  __( 'Search ' .$Displays ),
+//			'all_items' => __( 'All '.$Displays ),
+//			'parent_item' => __( 'Parent '.$Display ), 
+//			'parent_item_colon' => __( 'Parent '.$Display.':' ),
+//			'edit_item' => __( 'Edit '.$Display ), 
+//			'update_item' => __( 'Update '.$Display ),
+//			'add_new_item' => __( 'Add New '.$Display ),
+//			'new_item_name' => __( 'New '.$Display.' Name' ),
+//			'menu_name' => __( $Displays ),
+//		);
+//
+//		$items = array(
+//			'hierarchical' => true,
+//			'labels' => $labels,
+//			'show_ui' => true,
+//			'show_in_rest' => true,
+//			'show_admin_column' => true,
+//			'query_var' => false,
+//			'has_archive' => true,
+//			'rewrite' => array('slug' => $Lower,'with_front' => false),
+////			'rewrite' => array('slug' => 'workshops/'.$Lower,'with_front' => false),
+////			'rewrite' => array('slug' => 'workshops','with_front' => false),
+//		);
+//
+//		register_taxonomy($Lower,array('presenter','workshop', 'product'),$items);
+//	}
+//} add_action( 'init', 'Craft_Taxonomy', 10 );
 function Timeslot_Taxonomy() {
 	if(!taxonomy_exists('timeslot')) {
 		$Display = 'Timeslot';

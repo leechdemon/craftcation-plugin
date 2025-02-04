@@ -87,6 +87,20 @@ function cc_tag_selector() {
 
 <div class="wrap">
 	<h3>Waitlist Options</h3>
+	<form method="post" action="options.php">
+		<?php settings_fields( 'cc-waitlist-settings-group' ); ?>
+		<?php do_settings_sections( 'cc-waitlist-settings-group' ); ?>
+
+<!--		<select id="cc_waitlist_tags" name="cc_waitlist_tags">-->
+			<?php
+				echo '<label>ex: "+24 hours" = 24 hours ago</label><br>';
+				echo '<label>ex: "-5 minutes" = 5 minutes from now</label><br>';
+				echo '<input id="cc_waitlist_duration" name="cc_waitlist_duration" value="' .esc_attr( get_option('cc_waitlist_duration') ). '">';
+		?>
+<!--		</select>-->
+				
+	    <?php submit_button(); ?>
+	</form>
 </div>
 
 <?php

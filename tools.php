@@ -8,6 +8,7 @@ if(!function_exists('Test')) { // PHP script to dump variable into JavaScript co
 		else { echo "<pre>" .var_dump($js_code). "</pre>"; }
 	 }
 }
+
 //if(!function_exists('OutputTemplateSlug')) {
 //	function OutputTemplateSlug() {	
 //		$Display = false;	
@@ -175,3 +176,6 @@ function cc_ticket_options() {
 function cc_workshop_options() {
 	register_setting( 'cc-workshop-settings-group', 'cc_workshop_tags' );
 } add_action( 'admin_init', 'cc_workshop_options');
+function cc_waitlist_options() {
+	register_setting( 'cc-waitlist-settings-group', 'cc_waitlist_duration' );
+} add_action( 'admin_init', 'cc_waitlist_options');

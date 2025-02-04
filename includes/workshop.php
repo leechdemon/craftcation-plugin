@@ -448,3 +448,42 @@ function WorkshopFilterDropdowns( $atts ) {
 //		}
 //    }
 //} add_action('save_post', 'workshop_cpt_autosave');
+
+function cc_workshop_query($query) {
+	/* This function only runs when an Elementor widget calls for Query ID 'cc_workshop_query' */
+	
+	/* Set up query */
+	$query->set('order', 'ASC');
+	$tax_query = array ('relation' => 'AND');	
+
+	/* Workshops only... */
+	$include_slugs = get_term( esc_attr( get_option('cc_workshop_tags') ) )->slug;
+	$tax_query []= array(
+		'taxonomy' => 'product_tag',
+		'field' => 'slug',
+		'terms' => $include_slugs,
+	);
+
+	/* exclude tags...*/
+	$exlude_slugs = array( 'workshop-session' );
+	$tax_query []= array(
+		'taxonomy' => 'product_tag',
+		'field' => 'slug',
+		'terms' => $exlude_slugs,
+		'operator' => 'NOT IN',
+	);
+	
+	/* assign tag_query */
+	$query->set('tax_query', $tax_query);
+	
+} add_action( 'elementor/query/cc_workshop_query', 'cc_workshop_query' );
+
+function workshop_remove_hyphens($title) {
+	$output = $title;
+	
+	$newTitle = explode(' &#8211; ',$title);
+	if( $newTitle[1] ) { $output = $newTitle[0]; }
+	
+	return $output;
+}
+add_action('the_title','workshop_remove_hyphens');

@@ -3,7 +3,7 @@
 Plugin Name: Craftcation
 Description: A plugin to create and manage Ticket and Workship Databases, and tools to assist in the Craftcation ticketing process.
 Author: Leechdemon
-Version: 1.2.9
+Version: 1.3.00
 */
 
 require_once plugin_dir_path(__FILE__) . 'tools.php';
@@ -35,3 +35,19 @@ function cc_update_db_check() {
         cc_waitlist_install();
     }
 } add_action( 'plugins_loaded', 'cc_update_db_check' ); 
+
+function header_test() { 
+	global $wp_query;
+
+	foreach( $wp_query->posts as $post ) {
+//		$post->id
+//		$tag = get_term_by ('slug', 'workshop-session', 'product_tag' );
+//		$tag_ids []= $tag->term_id; 
+
+//		Test( $tag );
+//		Test( get_the_terms( $post, 'product_tag' ) );
+	}
+
+//		Test( $wp_query );
+	
+} add_action( 'wp_head', 'header_test' ); 

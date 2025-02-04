@@ -38,18 +38,28 @@ function cc_waitlist_insert() { // Adds order to DB
 		)
 	);
 } add_action( 'wp_ajax_cc_waitlist_insert', 'cc_waitlist_insert' );
-function cc_waitlist_remove() { // Adds order to DB
+function cc_waitlist_remove( $removalDate = null, $workshopId = null, $customerId = null, $waitlistDate = null ) { // Updates DB with removal date 
 	global $wpdb, $cc_waitlist_db_version, $cc_waitlist_table_name;
-			
-	$wpdb->update( 
+	
+	if( isset($_POST['removalDate']) ) { $removalDate = $_POST['removalDate']; }
+	if( isset($_POST['workshopId']) ) { $workshopId = $_POST['workshopId']; }
+	if( isset($_POST['customerId']) ) { $customerId = $_POST['customerId']; }
+	if( isset($_POST['waitlistDate']) ) { $waitlistDate = $_POST['waitlistDate']; }
+	
+	echo "removalDate - " . $removalDate;
+	echo "workshopId - " . $workshopId;
+	echo "customerId - " . $customerId;
+	echo "waitlistDate - " . $waitlistDate;
+	
+	echo $wpdb->update( 
 		$cc_waitlist_table_name, 
 		array( 
-			'removalDate' => $_POST['removalDate'],
+			'removalDate' => $removalDate,
 		),
 		array( 
-			'workshopId' => $_POST['workshopId'], 
-			'customerId' => $_POST['customerId'], 
-			'waitlistDate' => $_POST['waitlistDate'],
+			'workshopId' => $workshopId, 
+			'customerId' => $customerId, 
+			'waitlistDate' => $waitlistDate,
 		)
 	);
 } add_action( 'wp_ajax_cc_waitlist_remove', 'cc_waitlist_remove' );
@@ -184,15 +194,25 @@ function cc_waitlist_getStatus() { // Returns object/JSON of individual waitlist
 	echo json_encode( $status );
 	wp_die();
 } add_action( 'wp_ajax_cc_waitlist_getStatus', 'cc_waitlist_getStatus' );
-function cc_waitlist_getLists($jsonMode = 'false') { // Returns object/JSON of Ticket DB 
+function cc_waitlist_getLists( $workshopId = null, $jsonMode = 'false' ) { // Returns object/JSON of Ticket DB 
 	global $wpdb, $cc_waitlist_db_version, $cc_waitlist_table_name;
 	
-	if($jsonMode == 'true') {
-		echo json_encode( $wpdb->get_results( "SELECT * FROM " .$cc_waitlist_table_name ) );
+	if( isset( $workshopId ) ) {
+		$results = $wpdb->get_results( "SELECT * FROM " .$cc_waitlist_table_name. " WHERE workshopId=" .$workshopId );
+		
+		/* If we're looking for a workshop, we probably don't want ones that have been removed... */
+		foreach( $results as $result ) {
+			if( $result->removalDate == '' ) {
+				$response []= $result;
+			}
+		}
+	} else {
+		$response = $wpdb->get_results( "SELECT * FROM " .$cc_waitlist_table_name );
 	}
-	else {
-		return $wpdb->get_results( "SELECT * FROM " .$cc_waitlist_table_name );
-	}
+	
+	
+	if($jsonMode == 'true') { echo json_encode( $response ); }
+	else { return $response; }
 }
 function cc_waitlist_displayTable()  { // Displays Ticket DB
 	global $wpdb, $cc_waitlist_db_version, $cc_waitlist_table_name;
@@ -271,65 +291,60 @@ function DisplayWaitlistButton( $workshopId ) {
 	
 	return $Output;
 }
-function cc_waitlist_getNext( $workshopId ) {
-	$response = cc_waitlist_getLists();
-	foreach( $response as $waitlistItem ) {
-		if( $waitlistItem->workshopId == $workshopId && $waitlistItem->removalDate == '' ) {
-			$ThisList []= $waitlistItem;
-		}
-	}
-	return $ThisList[0];
-}
 function cc_waitlist_process( $workshopId ) {
-	date_default_timezone_set('America/Detroit');
-	$notificationDate = date( 'm/d/Y H:i:s', time() );
+	/* Called when a waitlisted Workshop is released. */
+	/* 		- Checks if customer has been emailed, crosses them off the list */
+	/* 		- Emails customer, records them in the DB */
 	
-	/* Determine the next user */
-	$nextCustomerRow = cc_waitlist_getNext( $workshopId );
-	$customerId = $nextCustomerRow->customerId;
-	$waitlistDate = $nextCustomerRow->waitlistDate;
+	date_default_timezone_set('America/Detroit');
+	$removalDate = $notificationDate = date( 'm/d/Y H:i:s', time() );
+	
+	$waitlists = cc_waitlist_getLists( $workshopId );
+
+	/* If this user has been contacted, remove them */
+	if( $waitlists[0]->notificationDate != '' ) { 
+		cc_waitlist_remove( $removalDate, $workshopId, $waitlists[0]->customerId, $waitlists[0]->waitlistDate );
+		$nextCustomerRow = $waitlists[1];
+	} else { $nextCustomerRow = $waitlists[0]; }
+	
+//	echo "<br><br>";
+//	echo json_encode($nextCustomerRow);
 	
 	/* Notify the next user */
-	cc_waitlist_notify( $customerId, $workshopId, $waitlistDate, $notificationDate );
-
-//	schedule_my_event();
-
+	cc_waitlist_notify( $nextCustomerRow->customerId, $workshopId, $nextCustomerRow->waitlistDate, $notificationDate );
 
 } add_action( 'wp_ajax_cc_waitlist_process', 'cc_waitlist_process' );
+function cc_waitlist_discover() {
+	$waitlists = cc_waitlist_getLists();
+	$response = '';
+	
+	foreach( $waitlists as $waitlist ) {
+		/* If they have a notification date, but weren't removed yet... */
+		if( $waitlist->notificationDate != '' && $waitlist->removalDate == '' ) {		
+			$response .= '<br>Waitlist discovered - '.$waitlist->workshopId;
+			$response .= '<br>---------------------------------------------------';
 
+			date_default_timezone_set('America/Detroit');
+			$notificationDate = date( 'm/d/Y H:i:s', strtotime($waitlist->notificationDate) );
+			$validDate = date( 'm/d/Y H:i:s', strtotime( get_option('cc_waitlist_duration') ) );
+			$response .= "<br>NotificationDate: ".$notificationDate;
+			$response .= "<br>validDate: ".$validDate;
 
-// Hook into the WordPress init action to schedule the event
-//function schedule_my_event() {
-//    if ( ! wp_next_scheduled( 'cc_waitlist_update_hook' ) ) {
-//        wp_schedule_event( time(), 'five_minutes', 'cc_waitlist_update_hook' );
-//    }
-//}
-//
-//// Define the custom interval for 5 minutes
-//function add_five_minutes_interval( $schedules ) {
-//    $schedules['five_minutes'] = array(
-//        'interval' => 5 * 60,  // 5 minutes in seconds
-//        'display'  => __( 'Once every 5 minutes' ),
-//    );
-//    return $schedules;
-//} add_filter( 'cron_schedules', 'add_five_minutes_interval' );
-//
-//// Hook your callback function to the scheduled event
-//function my_custom_event_callback() {
-//    // Your code to execute every 5 minutes
-//    // For example, logging a message:
-//    error_log( 'Custom event triggered at ' . current_time( 'mysql' ) );
-//} add_action( 'cc_waitlist_update_hook', 'my_custom_event_callback' );
-//
-//// Clear the scheduled event upon deactivation
-//function deactivate_my_event() {
-//    $timestamp = wp_next_scheduled( 'cc_waitlist_update_hook' );
-//    if ( $timestamp ) {
-//        wp_unschedule_event( $timestamp, 'cc_waitlist_update_hook' );
-//    }
-//} register_deactivation_hook( __FILE__, 'deactivate_my_event' );
-
-
+			/* If the date is expired...... */
+			$timeDiff = "Unset.";
+			if( $notificationDate < $validDate ) { 
+				$response = "<br> - Waitlist expired. Processing!";
+				cc_waitlist_process( $waitlist->workshopId );
+			} else { 
+				$response .= "<br> - Waitlist user is ".$waitlist->customerId;
+			}
+			$response .= "<br>";
+			
+			echo $response;
+		}	
+		
+	}
+}
 ?>
 
 <?php
