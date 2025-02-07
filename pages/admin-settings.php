@@ -93,9 +93,44 @@ function cc_tag_selector() {
 
 <!--		<select id="cc_waitlist_tags" name="cc_waitlist_tags">-->
 			<?php
-				echo '<label>ex: "+24 hours" = 24 hours ago</label><br>';
-				echo '<label>ex: "-5 minutes" = 5 minutes from now</label><br>';
-				echo '<input id="cc_waitlist_duration" name="cc_waitlist_duration" value="' .esc_attr( get_option('cc_waitlist_duration') ). '">';
+				echo 'How long should a customer\'s space on the waitlist be reserved?';
+				echo '<br><input id="waitlist_duration_24h" name="cc_duration" type="radio"><label>24 Hours</label>';
+				echo '<br><input id="waitlist_duration_5m" name="cc_duration" type="radio"><label>5 Minutes</label>';
+				echo '<br><input id="waitlist_duration_30s" name="cc_duration" type="radio"><label>30 Seconds</label>';
+				echo '<br><input id="waitlist_duration_c" name="cc_duration" type="radio"><label>Custom</label>';
+//				echo '<label>ex: "+24 hours" = 24 hours ago</label><br>';
+//				echo '<label>ex: "-5 minutes" = 5 minutes from now</label><br>';
+				echo '<br><input id="cc_waitlist_duration" name="cc_waitlist_duration" value="' .esc_attr( get_option('cc_waitlist_duration') ). '">';
+		
+				echo '<script>
+					/* Add Event Listeners */
+					const waitlist_duration_24h = document.getElementById("waitlist_duration_24h");
+					waitlist_duration_24h.addEventListener("change", (event) => {
+						document.getElementById( "cc_waitlist_duration" ).value = "-24 hours";
+						document.getElementById( "cc_waitlist_duration" ).style.display = "none";
+					});
+					const waitlist_duration_5m = document.getElementById("waitlist_duration_5m");
+					waitlist_duration_5m.addEventListener("change", (event) => {
+						document.getElementById( "cc_waitlist_duration" ).value = "-5 minutes";
+						document.getElementById( "cc_waitlist_duration" ).style.display = "none";
+					});
+					const waitlist_duration_30s = document.getElementById("waitlist_duration_30s");
+					waitlist_duration_30s.addEventListener("change", (event) => {
+						document.getElementById( "cc_waitlist_duration" ).value = "-30 seconds";
+						document.getElementById( "cc_waitlist_duration" ).style.display = "none";
+					});
+					const waitlist_duration_c = document.getElementById("waitlist_duration_c");
+					waitlist_duration_c.addEventListener("change", (event) => {
+						document.getElementById( "cc_waitlist_duration" ).style.display = "block";
+					});
+
+					/* Preselect */
+					var duration = "'.esc_attr( get_option('cc_waitlist_duration') ).'";
+					if( duration == "-24 hours" ) { document.getElementById("waitlist_duration_24h").click(); }
+					else if( duration == "-5 minutes" ) { document.getElementById("waitlist_duration_5m").click(); }
+					else if( duration == "-30 seconds" ) { document.getElementById("waitlist_duration_30s").click(); }
+					else { document.getElementById("waitlist_duration_c").click(); }
+				</script>';
 		?>
 <!--		</select>-->
 				

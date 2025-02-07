@@ -15,6 +15,7 @@ require_once plugin_dir_path(__FILE__) . 'includes/cpt-presenter.php';
 require_once plugin_dir_path(__FILE__) . 'includes/cpt-terms.php';
 require_once plugin_dir_path(__FILE__) . 'includes/db-waitlist.php';
 require_once plugin_dir_path(__FILE__) . 'includes/workshop.php';
+require_once plugin_dir_path(__FILE__) . 'includes/workshop-selection.php';
 
 global $cc_db_version, $cc_workshop_db_version, $cc_waitlist_db_version;
 //$cc_db_version = '1.2.9';
