@@ -45,7 +45,6 @@ function WorkshopsByID( $atts ) {
 	
 } add_shortcode('LinkWorkshops', 'WorkshopsByID');
 
-
 function CSV_Image( $url ) {
 	return explode( ')', explode( '(', $url )[1] )[0];
 }

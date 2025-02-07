@@ -46,11 +46,6 @@ function cc_waitlist_remove( $removalDate = null, $workshopId = null, $customerI
 	if( isset($_POST['customerId']) ) { $customerId = $_POST['customerId']; }
 	if( isset($_POST['waitlistDate']) ) { $waitlistDate = $_POST['waitlistDate']; }
 	
-	echo "removalDate - " . $removalDate;
-	echo "workshopId - " . $workshopId;
-	echo "customerId - " . $customerId;
-	echo "waitlistDate - " . $waitlistDate;
-	
 	echo $wpdb->update( 
 		$cc_waitlist_table_name, 
 		array( 

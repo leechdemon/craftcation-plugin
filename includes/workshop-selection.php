@@ -3,6 +3,7 @@ require_once plugin_dir_path(__FILE__) . '../craftcation.php';
 //require_once plugin_dir_path(__FILE__) . 'waitlist-js.php';
 
 function Process_WorkshopSelectionUpdates() {
+	
 	if( isset( $_POST['order'] ) ) {
 		unset($_POST ['order'] );
 		$hasItems = false;
@@ -34,11 +35,11 @@ function Process_WorkshopSelectionUpdates() {
 								
 				/* Check for form errors... */
 				if( $item > 0 && $notDuplicate ) { 
-
-					$inStock = false;
 					$stockCheck = wc_get_product( $item );
-					/* If it's still in stock... */
-					if ( $stockCheck->is_in_stock() ) { 
+					$waitlists = cc_waitlist_getLists( $item );
+					
+					/* If it's still in stock... (or waitlist position is available)*/
+					if ( $stockCheck->is_in_stock() || ( $waitlists[0]->customerId == get_current_user_id() && $waitlists[0]->notificationDate != '' ) ) { 
 						/* Add the item to the order */
 						$hasItems = true;
 						$order_req[ $t[1] ] = $item;
@@ -47,6 +48,13 @@ function Process_WorkshopSelectionUpdates() {
 						if( $workshopSelection[ $t[1] ] ) {
 							$hasRefunds = true;
 							$refund_req[ $t[1] ] = $workshopSelection[ $t[1] ];
+						}
+						
+						if( $waitlists[0]->customerId == get_current_user_id() ) {
+							date_default_timezone_set('America/Detroit');
+							$removalDate = date( 'm/d/Y H:i:s', time() );
+
+							cc_waitlist_remove( $removalDate, $waitlists[0]->workshopId, $waitlists[0]->customerId, $waitlists[0]->waitlistDate );
 						}
 					}
 
@@ -58,7 +66,7 @@ function Process_WorkshopSelectionUpdates() {
 		
 		/* Add New Items */
 		if( $hasItems ) {
-//			WorkshopSelection_AddOrder( $order_req );
+			WorkshopSelection_AddOrder( $order_req );
 		}
 		/* Refund Old Items */
 		if( $hasRefunds ) {
@@ -122,13 +130,13 @@ function WorkshopSelection_RefundItems( $refund_req ) {
 
 						/* Refund it */
 						$line_items[ $item_id ] = array( 'qty' => 1, );
-//						$refund = wc_create_refund( array(
-////							'amount'         => 0,
-//							'reason'         => '',
-//							'order_id'       => $o,
-//							'line_items'     => $line_items,
-//							'restock_items'  => $restockItems,
-//						));
+						$refund = wc_create_refund( array(
+//							'amount'         => 0,
+							'reason'         => '',
+							'order_id'       => $o,
+							'line_items'     => $line_items,
+							'restock_items'  => $restockItems,
+						));
 						
 						if( $restockItems == false ) {
 							cc_waitlist_process( $item['product_id'] );
@@ -166,8 +174,9 @@ function DisplayWorkshopSelection( $atts ) {
 			.workshop_schedule { display: grid; margin: 1rem 2rem; }
 			.workshop_timeslot { width: 100%; background-color: #666; clear: both; padding: 0.5rem; color: white; font-weight: 500; }
 			.workshop_timeslot:nth-child(even) { background-color: #999; }
-			.workshop_item { width: 18%; float: left; padding: 0rem 0.5rem; }
-			.workshop_item:first-child { width: 30%; }
+			.workshop_item { width: 25%; float: left; padding: 0rem 0.5rem; }
+			.workshop_item img { float: left; width: 3.5rem; margin-right: 0.5rem; }
+//			.workshop_item:first-child { width: 30%; }
 			.workshop_label { font-weight: 800; }
 			option.item_grayedout { color: #ccc !important; }
 		</style>';
@@ -196,7 +205,7 @@ function DisplayWorkshopSelection( $atts ) {
 				} elseif( $workshopSelection[$s][0] ) {
 					/* If there's only 1 selection, it is  "Selected". */
 					$Selection_id = $workshopSelection[$s][0];
-					$CurrentWorkshop = '<a href="'.get_permalink( $Selection_id ).'">'.get_post( $Selection_id )->post_title.'</a>';
+					$CurrentWorkshop = '<a href="'.get_permalink( $Selection_id ).'"><img src="'.get_the_post_thumbnail_url( $Selection_id ).'">'.get_post( $Selection_id )->post_title.'</a>';
 				}
 	   		}
 
