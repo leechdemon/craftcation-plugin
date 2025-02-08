@@ -204,8 +204,8 @@ function TaxSidebar( $atts ) {
 	$Output = '<div class="ws_terms" style="width: 100%;">';
 	if( $atts['tax'] != '' ) {
 		$Terms = get_terms( array(
-			'taxonomy'   => $atts['tax'],
-//			'hide_empty' => false,
+			'taxonomy'	=> $atts['tax'],
+			'orderby'	=> 'slug',
 		) );
 
 		if(!function_exists('CheckIfActiveTax')) {
@@ -220,6 +220,7 @@ function TaxSidebar( $atts ) {
 			if( $Term->parent == 0 ) {
 				$Output .= '<ul>';
 				$Output .= '<a class="'.CheckIfActiveTax( $atts['tax'], $Term).'" href="'.get_term_link( $Term ).'">'.$Term->name.'</a>';
+//				$Output.= '<script>console.log('.$Terms.');</script>';
 				foreach($Terms as $T) {
 					if( $T->parent ) {
 						if( $T->parent == $Term->term_id ) {

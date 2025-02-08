@@ -286,7 +286,10 @@ function get_workshopSelection() {
 
 	/* I'm not sure why this is better thanjust using the workshop tags from above. Maybe if the tag was deleted? But this is pre-release, so probably not. Maybe to remove typos, or to have access to the tag, IE "getTagBy(cc_workshop_tags)"? */
 	$workshopTagName = '';
-	$productTags = get_terms( 'product_tag' );
+	$productTags = get_terms( array(
+			'taxonomy'	=> 'product_tag',
+			'orderby'	=> 'slug',
+	) );
 	foreach($productTags as $productTag) {
 		foreach($workshopTagIDs as $tagID) {
 			if($tagID == $productTag->term_id) { $workshopTagName = $productTag->name; }
@@ -306,8 +309,10 @@ function get_workshopSelection() {
 	}
 
 	/* Build list of All Slots, Workshop Selections */
-	$slots = get_terms('timeslot');
-
+	$slots = get_terms( array(
+			'taxonomy'	=> 'timeslot',
+			'orderby'	=> 'slug',
+	) );
 	/* Build list of All Orders for current customer, status = "Processing" */
 	$args = array(
 		'customer_id' => wp_get_current_user()->id,

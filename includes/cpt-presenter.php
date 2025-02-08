@@ -72,5 +72,15 @@ function presenter_cpt_autosave($post_id) {
 		/* Workshop auto-save features go here */
 		
         update_post_meta($post_id, 'presenter_id', $post_id);
+		
+		$ig = get_post_meta($post_id,'presenter_ig')[0];
+		$ig = rtrim( $ig, '/' );
+
+		/* Remove leading '/'s */
+		if( str_contains($ig, '/') ) { $ig = end( explode( '/', $ig ) ); }
+		/* Remove leading '@'s */
+		if( str_contains($ig, '@') ) { $ig = end( explode( '@', $ig ) ); }
+		
+		update_post_meta($post_id, 'presenter_ig', $ig );
     }
 } add_action('save_post', 'presenter_cpt_autosave');

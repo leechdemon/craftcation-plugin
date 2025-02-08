@@ -10,9 +10,13 @@ function PresenterByID( $atts ) {
 } add_shortcode('PresenterByID', 'PresenterByID');
 /* Used on workshop page to link to coordinating presenter */
 function PresenterNameByID( $atts ) {
-	$Presenter = get_post($atts['tid']);
-	
-	return '<a href="'.get_the_permalink($atts['tid']).'">'.$Presenter->post_title.'</a>';
+	foreach( explode( ',', $atts['tid'] ) as $key => $tid ) {
+		$Presenter = get_post($tid);
+
+		if($key != 0) { $output .= ', '; }
+		$output .= '<a href="'.get_the_permalink($tid).'">'.$Presenter->post_title.'</a>';
+	}
+	return $output;
 } add_shortcode('PresenterNameByID', 'PresenterNameByID');
 
 /* Used on presenter page to link to coordinating workshops */
