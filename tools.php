@@ -8,6 +8,7 @@ if(!function_exists('Test')) { // PHP script to dump variable into JavaScript co
 		else { echo "<pre>" .var_dump($js_code). "</pre>"; }
 	 }
 }
+
 //if(!function_exists('OutputTemplateSlug')) {
 //	function OutputTemplateSlug() {	
 //		$Display = false;	
@@ -169,3 +170,14 @@ function cc_shortcode( $atts, $content = "" ) {
 	return ob_get_clean();
 } add_shortcode( 'craftcation', 'cc_shortcode' );
 
+function cc_ticket_options() {
+	register_setting( 'cc-ticket-settings-group', 'cc_ticket_tags' );
+} add_action( 'admin_init', 'cc_ticket_options');
+function cc_workshop_options() {
+	register_setting( 'cc-workshop-settings-group', 'cc_workshop_tags' );
+	register_setting( 'cc-workshop-settings-group', 'cc_workshop_ignore_tags' );
+} add_action( 'admin_init', 'cc_workshop_options');
+function cc_waitlist_options() {
+	register_setting( 'cc-waitlist-settings-group', 'cc_waitlist_duration' );
+	register_setting( 'cc-waitlist-settings-group', 'cc_waitlist_ignore_tags' );
+} add_action( 'admin_init', 'cc_waitlist_options');
