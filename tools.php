@@ -175,7 +175,9 @@ function cc_ticket_options() {
 } add_action( 'admin_init', 'cc_ticket_options');
 function cc_workshop_options() {
 	register_setting( 'cc-workshop-settings-group', 'cc_workshop_tags' );
+	register_setting( 'cc-workshop-settings-group', 'cc_workshop_ignore_tags' );
 } add_action( 'admin_init', 'cc_workshop_options');
 function cc_waitlist_options() {
 	register_setting( 'cc-waitlist-settings-group', 'cc_waitlist_duration' );
+	register_setting( 'cc-waitlist-settings-group', 'cc_waitlist_ignore_tags' );
 } add_action( 'admin_init', 'cc_waitlist_options');

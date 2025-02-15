@@ -168,17 +168,17 @@ function DisplayWorkshopSelection( $atts ) {
 		/* Display Things */
 		$Output .= '<style>
 			.workshop-selections, .get_response { background: #DDD; padding: 0.5rem; margin: 0rem; border: solid 1px red; }
-//			.workshop-selections { display: none; }
-//			.get_response { display: none; }
-		
-			.workshop_schedule { display: grid; margin: 1rem 2rem; }
-			.workshop_timeslot { width: 100%; background-color: #666; clear: both; padding: 0.5rem; color: white; font-weight: 500; }
-			.workshop_timeslot:nth-child(even) { background-color: #999; }
-			.workshop_item { width: 25%; float: left; padding: 0rem 0.5rem; }
-			.workshop_item img { float: left; width: 3.5rem; margin-right: 0.5rem; }
-//			.workshop_item:first-child { width: 30%; }
-			.workshop_label { font-weight: 800; }
-			option.item_grayedout { color: #ccc !important; }
+			.workshop-selections { display: none; }
+			.get_response { display: none; }
+//		
+//			.workshop_schedule { display: grid; margin: 1rem 2rem; }
+//			.workshop_timeslot { width: 100%; background-color: #666; clear: both; padding: 0.5rem; color: white; font-weight: 500; }
+//			.workshop_timeslot:nth-child(even) { background-color: #999; }
+//			.workshop_item { width: 25%; float: left; padding: 0rem 0.5rem; }
+//			.workshop_item img { float: left; width: 3.5rem; margin-right: 0.5rem; }
+//
+//			.workshop_label { font-weight: 800; }
+//			option.item_grayedout { color: #ccc !important; }
 		</style>';
 		
 		/* Draw the workshop selections */
@@ -188,7 +188,7 @@ function DisplayWorkshopSelection( $atts ) {
 		/* Draw the Slots */
 		$Output .= '<div class="workshop_schedule">';
 			/* Draw the Headers */
-			$Output .= '<div class="workshop_timeslot">
+			$Output .= '<div id="workshop_headers" class="workshop_timeslot">
 				<div class="workshop_item workshop_label">Timeslot</div>
 				<div class="workshop_item workshop_label">My Registration</div>
 				<div class="workshop_item workshop_label">New Registration</div>
@@ -209,16 +209,24 @@ function DisplayWorkshopSelection( $atts ) {
 				}
 	   		}
 
-			$Output .= '<div class="workshop_timeslot">
+			$timeslotHasWorkshops = false;
+			$Output .= '<div id="workshop_timeslot_'.$s.'" class="workshop_timeslot" style="display: none;">
 				<div class="workshop_item">'.$slot->name.'</div>';
 			if( strlen( $slot->name ) < 10 ) {
 				// dosomething
+				$timeslotHasWorkshops = true;
+				$Output .= '<script>document.getElementById("workshop_timeslot_'.$s.'").classList.add("workshop_item_solo");</script>';
 			} else {
 			$Output .= '<div class="workshop_item">'.$CurrentWorkshop.'</div>
 				<select id="timeslot_'.$s.'" name="timeslot_'.$s.'" class="workshop_item timeslot" form="workshopSelection">
 					<option value="0">--- Select Workshop ---</option>';
 					foreach( $workshops as $workshop ) {
-						if( get_the_terms( $workshop['id'], 'timeslot' )[0]->slug == $s ) { 
+						$workshopIgnoreTagId = esc_attr( get_option('cc_workshop_ignore_tags') );
+						$noWorkshopSelection = has_term( $workshopIgnoreTagId, 'product_tag', $workshop['id'] );
+						
+						if( get_the_terms( $workshop['id'], 'timeslot' )[0]->slug == $s && !$noWorkshopSelection ) { 
+							$timeslotHasWorkshops = true;
+							
 							$IsGrayedOut = $IsSoldOut = $IsSelected = $IsStarred = '';
 							if( $workshop['id'] == $Selection_id ) { $IsSelected = ' selected="true"'; $IsStarred = ' **'; }
 							if( $workshop['stock_quantity'] < 1 ) { $IsGrayedOut = ' class="item_grayedout"'; $IsSoldOut = ' (Sold Out)'; } 
@@ -227,21 +235,21 @@ function DisplayWorkshopSelection( $atts ) {
 							$Output .= $workshop['name'].$IsStarred.$IsSoldOut.'</option>';
 						}
 					}
-				$Output .= '</select>';
+				$Output .= '</select>';			
 			
 				$Output .= '<div class="workshop_item">';
 				foreach( $workshops as $workshop ) {
 					if( get_the_terms( $workshop['id'], 'timeslot' )[0]->slug == $s ) { 
-//						$Output .= '<div id="workshop_notes_item_'.$workshop['id'].'" class="workshop_notes_'.$s.'" style="display:none;">'.$workshop['name'].'</div>';
 						$IsSelected = ' style="display:none;"';
 						if( $workshop['id'] == $Selection_id ) { $IsSelected = ''; }
 						
-//						$Output .= '<div id="workshop_notes_item_'.$workshop['id'].'" class="workshop_notes_'.$s.'"'.$IsSelected.'>'.substr($workshop['name'],0,1).' - '.$workshop['stock_quantity'].' spaces</div>';
 						$Output .= '<div id="workshop_notes_item_'.$workshop['id'].'" class="workshop_notes_'.$s.'"'.$IsSelected.'>';
+						
+						/* Conditionally display the Waitlist button */
 						if( $workshop['stock_quantity'] < 1 ) {
-							
-							/* Conditionally display the Waitlist button */
-							$Output .= DisplayWaitlistButton( $workshop['id'] );
+							/* hide, if "noWaitlist" */
+							if( has_term('noWaitlist', 'product_tag', $workshop['id'] ) ) { /* do something */ }
+							else { $Output .= DisplayWaitlistButton( $workshop['id'] ); }
 						}
 						$Output .= '</div>';
 					}
@@ -256,7 +264,7 @@ function DisplayWorkshopSelection( $atts ) {
 								workshopNotes[n].style.display = "none";
 							}
 
-							document.getElementById( "workshop_notes_item_"+event.target.value ).style.display = "block";
+							document.getElementById( "workshop_notes_item_"+event.target.value ).style.display = "flex";
 						});
 					} catch (error) {
 						/* do something */
@@ -264,7 +272,10 @@ function DisplayWorkshopSelection( $atts ) {
 				</script>';
 				$Output .= '</div>';
 			}
+			if( $timeslotHasWorkshops ) { $Output .= '<script>document.getElementById("workshop_timeslot_'.$s.'").style.display = "flex";</script>'; }
 			$Output .= '</div>';
+			
+			
 		} /* End Timeslot */
 		$Output .= '<form action="#" method="post" id="workshopSelection">
 			<input type="hidden" name="order" id="order" value="order">
@@ -289,6 +300,8 @@ function get_workshopSelection() {
 	$productTags = get_terms( array(
 			'taxonomy'	=> 'product_tag',
 			'orderby'	=> 'slug',
+			'limit' => -1,
+			'hide_empty' => false,
 	) );
 	foreach($productTags as $productTag) {
 		foreach($workshopTagIDs as $tagID) {
@@ -298,7 +311,8 @@ function get_workshopSelection() {
 	
 	/* Build list of All Workshops */
 	$args = array(
-    	'product_tag' => array( $workshopTagName )
+    	'product_tag' => array( $workshopTagName ),
+    	'limit' => -1,
 	);
 	$w = wc_get_products( $args );
 	
@@ -312,6 +326,8 @@ function get_workshopSelection() {
 	$slots = get_terms( array(
 			'taxonomy'	=> 'timeslot',
 			'orderby'	=> 'slug',
+			'limit' => -1,
+			'hide_empty' => false,
 	) );
 	/* Build list of All Orders for current customer, status = "Processing" */
 	$args = array(
