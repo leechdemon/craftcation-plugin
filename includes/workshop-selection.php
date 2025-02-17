@@ -79,7 +79,7 @@ function Process_WorkshopSelectionUpdates() {
 function WorkshopSelection_AddOrder( $order_req ) {
 	$args = array(
 		'status' => 'wc-complete',
-		'customer_id' => wp_get_current_user()->id,
+		'customer_id' => get_current_user_id(),
 	);
 	$order = wc_create_order( $args );
 
@@ -93,7 +93,7 @@ function WorkshopSelection_AddOrder( $order_req ) {
 function WorkshopSelection_RefundItems( $refund_req ) {
 	/* Build list of All Orders for current customer, status = "Processing" */
 	$args = array(
-		'customer_id' => wp_get_current_user()->id,
+		'customer_id' => get_current_user_id(),
 //		'status' => 'processing',
 		'limit' => -1,
 //			'order' => 'DESC',
@@ -154,8 +154,9 @@ function WorkshopSelection_RefundItems( $refund_req ) {
 function DisplayWorkshopSelection( $atts ) {
 	require_once plugin_dir_path(__FILE__) . 'waitlist-js.php';
 	
+	$Output = '';
 	/* if we have a user... */
-	if( wp_get_current_user()->id > 0 ) {
+	if( is_user_logged_in() ) {
 		/* Build list of workshopsSelection */
 		$w = get_workshopSelection();
 		$workshops = $w[0];
@@ -289,7 +290,8 @@ function DisplayWorkshopSelection( $atts ) {
 		return $Output;				
 	}
 	else {
-		return 'Please log in.';
+		$Output = 'Please log in.';
+		return $Output;
 	}
 } add_shortcode('DisplayWorkshopSelection', 'DisplayWorkshopSelection');
 function get_workshopSelection() {
@@ -329,77 +331,82 @@ function get_workshopSelection() {
 			'limit' => -1,
 			'hide_empty' => false,
 	) );
-	/* Build list of All Orders for current customer, status = "Processing" */
-	$args = array(
-		'customer_id' => wp_get_current_user()->id,
-//		'status' => 'processing',
-		'limit' => -1,
-//			'order' => 'DESC',
-//			'order' => 'ASC',
-		'return' => 'ids',
-		'meta_query' => array(
-			array(
-				'key' => '_product_id', // Meta key to filter by product ID
-				'value' => $product_ids, // Product IDs to filter
-				'compare' => 'IN', // Use 'IN' to find orders that contain any of the specified product IDs
-			),
-    	),
-	);
-	$orders = wc_get_orders($args);
 	
-	/* get Waitlists */
-	$waitlists = cc_waitlist_getLists();
+	if( is_user_logged_in() ) {
+		/* Build list of All Orders for current customer, status = "Processing" */
+		$args = array(
+			'customer_id' => get_current_user_id(),
+	//		'status' => 'processing',
+			'limit' => -1,
+	//			'order' => 'DESC',
+	//			'order' => 'ASC',
+			'return' => 'ids',
+			'meta_query' => array(
+				array(
+					'key' => '_product_id', // Meta key to filter by product ID
+					'value' => $product_ids, // Product IDs to filter
+					'compare' => 'IN', // Use 'IN' to find orders that contain any of the specified product IDs
+				),
+			),
+		);
+		$orders = wc_get_orders($args);
 
-	/* For each workshop item (variable, large amount (100+?) */
-	$workshopSelection = array();
-	foreach($workshops as $w => $workshop) {
+		/* get Waitlists */
+		$waitlists = cc_waitlist_getLists();
 
-		/* For each customer order... */
-		foreach($orders as $key => $order) {
-			$thisOrder = new WC_Order( $order );
+		/* For each workshop item (variable, large amount (100+?) */
+		$workshopSelection = array();
+		foreach($workshops as $w => $workshop) {
 
-			/* ... For each line item... */
-			foreach ( $thisOrder->get_items() as $item_id => $item ) {
-				/* ...if it matches a Workshop Product ID... */
-				if( $item['product_id'] == $workshops[$w]['id'] ) {
-					$itemReturned = false;
+			/* For each customer order... */
+			foreach($orders as $key => $order) {
+				$thisOrder = new WC_Order( $order );
 
-					/* ... See if the item hasn't been returned yet... */
-					foreach( $thisOrder->get_refunds() as $refund ) {
-						foreach ( $refund->get_items() as $refunded_item ) {
-							if ( $refunded_item['product_id'] === $item['product_id'] ) {
+				/* ... For each line item... */
+				foreach ( $thisOrder->get_items() as $item_id => $item ) {
+					/* ...if it matches a Workshop Product ID... */
+					if( $item['product_id'] == $workshops[$w]['id'] ) {
+						$itemReturned = false;
+
+						/* ... See if the item hasn't been returned yet... */
+						foreach( $thisOrder->get_refunds() as $refund ) {
+							foreach ( $refund->get_items() as $refunded_item ) {
+								if ( $refunded_item['product_id'] === $item['product_id'] ) {
 
 
-								if ( $refunded_item->get_quantity() != 0 ) {
-									$itemReturned = true;
+									if ( $refunded_item->get_quantity() != 0 ) {
+										$itemReturned = true;
+									}
 								}
 							}
 						}
-					}
 
-					if($itemReturned == false) { 
-						foreach($slots as $slot) {
-							if( get_the_terms( $workshops[$w]['id'], 'timeslot' )[0]->slug == $slot->slug ) {
-								$workshopSelection[$slot->slug] []= $workshops[$w]['id'];
+						if($itemReturned == false) { 
+							foreach($slots as $slot) {
+								if( get_the_terms( $workshops[$w]['id'], 'timeslot' )[0]->slug == $slot->slug ) {
+									$workshopSelection[$slot->slug] []= $workshops[$w]['id'];
+								}
 							}
-						}
-					}						
+						}						
+					}
 				}
 			}
-		}
-		foreach( $waitlists as $waitlist ) {
-			/* If customer=waitlist=workshop match... */
-			if( $waitlist->customerId == get_current_user_id() && $waitlist->workshopId == $workshops[$w]['id'] ) {
+			foreach( $waitlists as $waitlist ) {
+				/* If customer=waitlist=workshop match... */
+				if( $waitlist->customerId == get_current_user_id() && $waitlist->workshopId == $workshops[$w]['id'] ) {
 
-				/* If this item hasn't been removed... */
-				if( $waitlist->removalDate == '' ) {
-					/* Add to the waitlistSelection */
-					$waitlistSelection []= $workshops[$w]['id'];
+					/* If this item hasn't been removed... */
+					if( $waitlist->removalDate == '' ) {
+						/* Add to the waitlistSelection */
+						$waitlistSelection []= $workshops[$w]['id'];
+					}
 				}
 			}
 		}
+		arsort($workshopSelection);
+	} else {
+		
 	}
-	arsort($workshopSelection);
 	
 	return [ $workshops, $slots, $orders, $workshopSelection, $waitlistSelection ];
 }
