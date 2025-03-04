@@ -1,12 +1,15 @@
 <script>
 	function cc_waitlist_add_button( workshopId, prefix, status ) {
-		document.getElementById( prefix + 'waitlist-icon-' + workshopId + '-add' ).style.display = 'none';
-		document.getElementById( prefix + 'waitlist-icon-' + workshopId + '-remove' ).style.display = 'none';
+		var div;
+		div = document.getElementById( prefix + 'waitlist-icon-' + workshopId + '-add' );
+		if(div) { div.style.display = 'none'; }
+		div = document.getElementById( prefix + 'waitlist-icon-' + workshopId + '-remove' );
+		if(div) { div.style.display = 'none'; }
 		
 		if( !status ) {
 			cc_waitlist_getStatus( workshopId, prefix, 'cc_waitlist_add_button' );
 		} else if ( status == "unlisted" ) {
-			cc_waitlist_add( workshopId );
+			cc_waitlist_add( workshopId, prefix );
 		}
 	}
 	function cc_waitlist_add( workshopId, prefix ) {
@@ -70,20 +73,21 @@
 			success: function ( data ) {
 				var status = JSON.parse(data);
 				var div;
-				if( status == "unlisted" ) {
+				
+				if( status != "unlisted" ) {
 					div = document.getElementById( prefix + 'waitlist-icon-' + workshopId + '-add' );
-					if( div ) { div.style.display = 'block'; }
-					div = document.getElementById( prefix + 'waitlist-icon-' + workshopId + '-remove' );
 					if( div ) { div.style.display = 'none'; }
+					div = document.getElementById( prefix + 'waitlist-icon-' + workshopId + '-remove' );
+					if( div ) { div.style.display = 'block'; }
 				} else if (status != "" ) {
 					div = document.getElementById( prefix + 'waitlist-icon-' + workshopId + '-add' );
-					if( div ) { div.style.display = 'none'; }
-					div = document.getElementById( prefix + 'waitlist-icon-' + workshopId + '-remove' );
 					if( div ) { div.style.display = 'block'; }
+					div = document.getElementById( prefix + 'waitlist-icon-' + workshopId + '-remove' );
+					if( div ) { div.style.display = 'none'; }
 				}
 				
 				if( callback ) {
-					eval(callback + "( " +workshopId+ ", " +data+ ");" );
+					eval(callback + "( " +workshopId+ ", '" +prefix+ "', " +data+ ");" );
 				}
 			}
 		});
@@ -94,6 +98,7 @@
 
 		if( !status ) {
 			cc_waitlist_getStatus( workshopId, prefix, 'cc_waitlist_remove_button' );
+//		} else if ( status == "unlisted" && status != "" ) {
 		} else if ( status != "unlisted" && status != "" ) {
 			cc_waitlist_remove( workshopId, prefix, status );
 		}

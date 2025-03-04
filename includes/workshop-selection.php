@@ -175,10 +175,10 @@ function DisplayWorkshopSelection( $atts ) {
 		/* Build list of workshopsSelection */
 		$w = get_workshopSelection();
 		$workshops = [];
-		$workshopIgnoreTagId = esc_attr( get_option('cc_workshop_ignore_tags') );
+		$sessionIgnoreTagId = esc_attr( get_option('cc_session_ignore_tags') );
 		foreach( $w[0] as $key => $workshop ) {
-			$noWorkshopSelection = has_term( $workshopIgnoreTagId, 'product_tag', $workshop['id'] );
-			if( $prefix == "ws_" ) {
+			$noWorkshopSelection = has_term( $sessionIgnoreTagId, 'product_tag', $workshop['id'] );
+			if( $prefix != "ws_" ) {
 				if( $noWorkshopSelection ) { array_push( $workshops, $workshop ); }
 			} else { 
 				if ( !$noWorkshopSelection ) { array_push( $workshops, $workshop ); }
@@ -189,6 +189,27 @@ function DisplayWorkshopSelection( $atts ) {
 		$workshopSelection = $w[3];
 		$waitlistSelection = $w[4];
 		
+		foreach( $waitlistSelection as $key => $workshopID ) {
+			$workshop = wc_get_product( $workshopID );
+			$terms = get_the_terms( $workshopID , 'timeslot' );
+
+			/* Check if there's multiple terms */
+			if( count($terms) > 1 ) {
+				Test( $workshop->get_name() );
+				Test( '- Type: ' . $workshop->get_type() );
+				Test( '- Timeslots: ' . count($terms) );
+
+				/* Check if it's a simple product type */
+				if( $workshop->get_type() == 'simple' ) {
+					
+					/* Check if the product already exists */
+					$title = $workshop->get_name();
+					
+					
+				}
+			}
+		}
+					
 		/* Display Things */
 		/* Display Things */
 		echo '<style>
@@ -218,13 +239,15 @@ function DisplayWorkshopSelection( $atts ) {
 				</div>';
 			
 				foreach( $waitlistSelection as $waitlist ) {
-					$CurrentWorkshop = '<a href="'.get_permalink( $waitlist ).'"><img src="'.get_the_post_thumbnail_url( $waitlist ).'">'.get_post( $waitlist )->post_title.'</a>';
+					$Cosmetic_id = get_post_meta( $waitlist, 'workshop_id', true );
+						
+					$CurrentWorkshop = '<a href="'.get_permalink( $Cosmetic_id ).'"><img src="'.get_the_post_thumbnail_url( $Cosmetic_id ).'">'.get_post( $Cosmetic_id )->post_title.'</a>';
 					echo '<div class="waitlist_timeslot">';
 						echo '<p class="waitlist_item waitlist_time">'.get_the_terms(get_post( $waitlist ), 'timeslot')[0]->name.'</p>';
 						echo '<p class="waitlist_item waitlist_name">'.$CurrentWorkshop.'</p>';
 						echo '<p id="'.$prefix.$waitlist.'_position" class="waitlist_item waitlist_position">'.cc_waitlist_getPosition($waitlist).'</p>';
 						echo '<p class="waitlist_item waitlist_change">'.DisplayWaitlistButton($waitlist, $prefix).'</p>';
-	//					echo "<script>cc_waitlist_getStatus(".$waitlist.", '".$prefix."');</script>";
+//						echo "<script>cc_waitlist_getStatus(".$waitlist.", '".$prefix."');</script>";
 					echo '</div>';
 				}
 			echo '</div>';
@@ -260,7 +283,9 @@ function DisplayWorkshopSelection( $atts ) {
 					} elseif( $workshopSelection[$s][0] ) {
 						/* If there's only 1 selection, it is  "Selected". */
 						$Selection_id = $workshopSelection[$s][0];
-						$CurrentWorkshop = '<a href="'.get_permalink( $Selection_id ).'"><img src="'.get_the_post_thumbnail_url( $Selection_id ).'">'.get_post( $Selection_id )->post_title.'</a>';
+						$Cosmetic_id = get_post_meta( $Selection_id, 'workshop_id', true );
+						
+						$CurrentWorkshop = '<a href="'.get_permalink( $Cosmetic_id ).'"><img src="'.get_the_post_thumbnail_url( $Cosmetic_id ).'">'.get_post( $Cosmetic_id )->post_title.'</a>';
 					}
 				}
 
@@ -281,6 +306,10 @@ function DisplayWorkshopSelection( $atts ) {
 						<option value="0">--- Select Workshop ---</option>';
 						foreach( $workshops as $workshop ) {						
 							if( get_the_terms( $workshop['id'], 'timeslot' )[0]->slug == $s ) { 
+								$Cosmetic_id = get_post_meta( $workshop['id'], 'workshop_id', true );
+//								$SessionID = $workshop['id'];
+//								$Selection_id = get_post_meta( $SessionID, 'workshop_id', true );
+
 								$timeslotHasWorkshops = true;
 
 								$IsGrayedOut = $IsSoldOut = $IsSelected = $IsStarred = '';
@@ -288,7 +317,7 @@ function DisplayWorkshopSelection( $atts ) {
 								if( !$workshop['is_in_stock'] ) { $IsGrayedOut = ' class="item_grayedout"'; $IsSoldOut = ' (Sold Out)'; } 
 
 								echo '<option value="'.$workshop['id'].'"'.$IsSelected.$IsGrayedOut.'>';
-								echo $workshop['name'].$IsStarred.$IsSoldOut.'</option>';
+								echo get_the_title($Cosmetic_id).$IsStarred.$IsSoldOut.'</option>';
 							}
 						}
 					echo '</select>';			
@@ -352,7 +381,7 @@ function DisplayWorkshopSelection( $atts ) {
 	}
 } add_shortcode('WorkshopSelection', 'DisplayWorkshopSelection');
 function get_workshopSelection() {
-	$workshopTagIDs = explode(',', esc_attr(get_option('cc_workshop_tags')) );
+	$sessionTagIDs = explode(',', esc_attr(get_option('cc_session_tags')) );
 
 	/* I'm not sure why this is better thanjust using the workshop tags from above. Maybe if the tag was deleted? But this is pre-release, so probably not. Maybe to remove typos, or to have access to the tag, IE "getTagBy(cc_workshop_tags)"? */
 	$workshopTagName = '';
@@ -363,7 +392,7 @@ function get_workshopSelection() {
 			'hide_empty' => false,
 	) );
 	foreach($productTags as $productTag) {
-		foreach($workshopTagIDs as $tagID) {
+		foreach($sessionTagIDs as $tagID) {
 			if($tagID == $productTag->term_id) { $workshopTagName = $productTag->name; }
 		}
 	}	

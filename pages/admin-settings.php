@@ -71,18 +71,44 @@ function cc_tag_selector() {
 				}
 			?>
 		</select>
+				
+	    <?php submit_button(); ?>
+	</form>
+</div>
 
+<div class="wrap">
+	<h3>Session Options</h3>
 		<?php
-			$workshopIgnoreTagIDs = explode(',', esc_attr(get_option('cc_workshop_ignore_tags')) );
-			$tagString = get_term( $workshopIgnoreTagIDs[0] )->name;
-			echo '<p>Workshop Selection will IGNORE any products tagged with "<strong>'.$tagString.'</strong>".</p>';
+			$sessionTagIDs = explode(',', esc_attr(get_option('cc_session_tags')) );
+			$tagString = get_term( $sessionTagIDs[0] )->name;
 		?>
-			<select id="cc_workshop_ignore_tags" name="cc_workshop_ignore_tags">
+	<p class="cc_setting_indent">Sessions include any products tagged with "<strong><?php echo $tagString; ?></strong>".</p>
+	<form class="cc_setting_indent" method="post" action="options.php">
+		<?php settings_fields( 'cc-session-settings-group' ); ?>
+		<?php do_settings_sections( 'cc-session-settings-group' ); ?>
+
+		<select id="cc_session_tags" name="cc_session_tags">
 			<?php
 				echo '<option value="0">-- Select Product Tag --</option>';
 
 				foreach($productTags as $tag) {
-					if( $tag->term_id == esc_attr( get_option('cc_workshop_ignore_tags') ) ) { $isSelected = ' selected="true"'; $isChecked = " - 	&#10004;"; } else { $isChecked = ''; $isSelected = ''; }
+					if( $tag->term_id == esc_attr( get_option('cc_session_tags') ) ) { $isSelected = ' selected="true"'; $isChecked = " - 	&#10004;"; } else { $isChecked = ''; $isSelected = ''; }
+					echo '<option value="'.$tag->term_id.'"'.$isSelected.'>'.$tag->name.$isChecked.'</option>';
+				}
+			?>
+		</select>
+
+		<?php
+			$sessionIgnoreTagIDs = explode(',', esc_attr(get_option('cc_session_ignore_tags')) );
+			$tagString = get_term( $sessionIgnoreTagIDs[0] )->name;
+			echo '<p>Workshop Selection will IGNORE any products tagged with "<strong>'.$tagString.'</strong>".</p>';
+		?>
+			<select id="cc_session_ignore_tags" name="cc_session_ignore_tags">
+			<?php
+				echo '<option value="0">-- Select Product Tag --</option>';
+
+				foreach($productTags as $tag) {
+					if( $tag->term_id == esc_attr( get_option('cc_session_ignore_tags') ) ) { $isSelected = ' selected="true"'; $isChecked = " - 	&#10004;"; } else { $isChecked = ''; $isSelected = ''; }
 					echo '<option value="'.$tag->term_id.'"'.$isSelected.'>'.$tag->name.$isChecked.'</option>';
 				}
 			?>

@@ -46,6 +46,10 @@ function display_workshops() {
 	$adminMenuSlug = 'pages/admin-workshop';
     require_once $adminMenuSlug . '.php'; //--> make sure you read up on paths and require to find your file.
 }
+function display_sessions() {
+	$adminMenuSlug = 'pages/admin-sessions';
+    require_once $adminMenuSlug . '.php'; //--> make sure you read up on paths and require to find your file.
+}
 function display_waitlists() {
 	$adminMenuSlug = 'pages/admin-waitlist';
     require_once $adminMenuSlug . '.php'; //--> make sure you read up on paths and require to find your file.
@@ -96,6 +100,21 @@ function cc_admin_workshops_menu() {
 		'50' // position
 	);	
 }  add_action( 'admin_menu', 'cc_admin_workshops_menu' );
+function cc_admin_sessions_menu() {
+	$adminMenuSlug = 'admin-settings';
+	$menuSlug = 'admin-sessions';
+	$menuTitle = 'Sessions';
+	
+	add_submenu_page(
+		$adminMenuSlug, // parent slug
+		$menuTitle . ' Page', // page title
+		$menuTitle, // menu title
+		'manage_options', // Capability requirement to see the link
+		$menuSlug, // The 'slug' - file to display when clicking the link
+		'display_sessions', // callback function
+		'50' // position
+	);	
+}  add_action( 'admin_menu', 'cc_admin_sessions_menu' );
 function cc_admin_tickets_menu() {
 	$adminMenuSlug = 'admin-settings';
 	$menuSlug = 'admin-ticket';
@@ -175,8 +194,12 @@ function cc_ticket_options() {
 } add_action( 'admin_init', 'cc_ticket_options');
 function cc_workshop_options() {
 	register_setting( 'cc-workshop-settings-group', 'cc_workshop_tags' );
-	register_setting( 'cc-workshop-settings-group', 'cc_workshop_ignore_tags' );
+//	register_setting( 'cc-workshop-settings-group', 'cc_workshop_ignore_tags' );
 } add_action( 'admin_init', 'cc_workshop_options');
+function cc_session_options() {
+	register_setting( 'cc-session-settings-group', 'cc_session_tags' );
+	register_setting( 'cc-session-settings-group', 'cc_session_ignore_tags' );
+} add_action( 'admin_init', 'cc_session_options');
 function cc_waitlist_options() {
 	register_setting( 'cc-waitlist-settings-group', 'cc_waitlist_duration' );
 	register_setting( 'cc-waitlist-settings-group', 'cc_waitlist_ignore_tags' );
