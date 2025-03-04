@@ -2,10 +2,15 @@
 require_once plugin_dir_path(__FILE__) . '../craftcation.php';
 //require_once plugin_dir_path(__FILE__) . 'waitlist-js.php';
 
-function Process_WorkshopSelectionUpdates() {
+function Process_WorkshopSelectionUpdates( $atts ) {
+	$filter = shortcode_atts( array(
+        'prefix' => 'ws_',
+    ), $atts, 'WorkshopSelection' );
 	
-	if( isset( $_POST['order'] ) ) {
-		unset($_POST ['order'] );
+	extract($filter);
+	if( isset( $_POST[ $prefix.'order' ] ) ) {
+		
+		unset($_POST[$prefix.'order'] );
 		$hasItems = false;
 		$hasRefunds = false;
 		
@@ -20,8 +25,15 @@ function Process_WorkshopSelectionUpdates() {
 		/* Build order_request */
 		foreach( $_POST as $key => $item ) {
 			$t = explode('_',$key);
-			if( $t[0] == 'timeslot' ) {
+			$search = $prefix.'timeslot';
+			
+			Test($t[0]);
+			Test($t[1]);
+			Test($t[2]);
+			
+			if( $t[0] == explode('_',$prefix)[0] && $t[1] == 'timeslot' ) {
 				/* Process Timeslot items */
+				Test("---");
 				
 				/* If workshopSelection item is unchanged/not a duplicate, prevent it from being added to the New Order. */
 				$notDuplicate = true;
@@ -42,12 +54,12 @@ function Process_WorkshopSelectionUpdates() {
 					if ( $stockCheck->is_in_stock() || ( $waitlists[0]->customerId == get_current_user_id() && $waitlists[0]->notificationDate != '' ) ) { 
 						/* Add the item to the order */
 						$hasItems = true;
-						$order_req[ $t[1] ] = $item;
+						$order_req[ $t[2] ] = $item;
 
 						/* If we're adding an item, and there's already a workshopSelection... */
-						if( $workshopSelection[ $t[1] ] ) {
+						if( $workshopSelection[ $t[2] ] ) {
 							$hasRefunds = true;
-							$refund_req[ $t[1] ] = $workshopSelection[ $t[1] ];
+							$refund_req[ $t[2] ] = $workshopSelection[ $t[2] ];
 						}
 						
 						if( $waitlists[0]->customerId == get_current_user_id() ) {
@@ -73,9 +85,7 @@ function Process_WorkshopSelectionUpdates() {
 			WorkshopSelection_RefundItems( $refund_req );
 		}	
 	}
-
-	return $Output;
-} add_shortcode('Process_WorkshopSelectionUpdates', 'Process_WorkshopSelectionUpdates');
+} add_shortcode('Process_WS_Updates', 'Process_WorkshopSelectionUpdates');
 function WorkshopSelection_AddOrder( $order_req ) {
 	$args = array(
 		'status' => 'wc-complete',
@@ -150,16 +160,30 @@ function WorkshopSelection_RefundItems( $refund_req ) {
 		
 	}
 }
-
 function DisplayWorkshopSelection( $atts ) {
 	require_once plugin_dir_path(__FILE__) . 'waitlist-js.php';
+	ob_start();
 	
-	$Output = '';
+	$filter = shortcode_atts( array(
+        'prefix' => 'ws_',
+    ), $atts, 'WorkshopSelection' );
+	extract($filter);
+	
+//	$Output = '';
 	/* if we have a user... */
 	if( is_user_logged_in() ) {
 		/* Build list of workshopsSelection */
 		$w = get_workshopSelection();
-		$workshops = $w[0];
+		$workshops = [];
+		$workshopIgnoreTagId = esc_attr( get_option('cc_workshop_ignore_tags') );
+		foreach( $w[0] as $key => $workshop ) {
+			$noWorkshopSelection = has_term( $workshopIgnoreTagId, 'product_tag', $workshop['id'] );
+			if( $prefix == "ws_" ) {
+				if( $noWorkshopSelection ) { array_push( $workshops, $workshop ); }
+			} else { 
+				if ( !$noWorkshopSelection ) { array_push( $workshops, $workshop ); }
+			}
+		}	
 		$slots = $w[1];
 		$orders = $w[2];
 		$workshopSelection = $w[3];
@@ -167,7 +191,7 @@ function DisplayWorkshopSelection( $atts ) {
 		
 		/* Display Things */
 		/* Display Things */
-		$Output .= '<style>
+		echo '<style>
 			.workshop-selections, .get_response { background: #DDD; padding: 0.5rem; margin: 0rem; border: solid 1px red; }
 			.workshop-selections { display: none; }
 			.get_response { display: none; }
@@ -180,120 +204,153 @@ function DisplayWorkshopSelection( $atts ) {
 //
 //			.workshop_label { font-weight: 800; }
 //			option.item_grayedout { color: #ccc !important; }
+	
 		</style>';
-		
-		/* Draw the workshop selections */
-		$Output .= '<div class="workshop-selections">Workshop Selections:<br>'. json_encode($workshopSelection) .'</div>';
-//json_encode($workshopSelection) .'</div>';
 
-		/* Draw the Slots */
-		$Output .= '<div class="workshop_schedule">';
-			/* Draw the Headers */
-			$Output .= '<div id="workshop_headers" class="workshop_timeslot">
-				<div class="workshop_item workshop_label">Timeslot</div>
-				<div class="workshop_item workshop_label">My Registration</div>
-				<div class="workshop_item workshop_label">New Registration</div>
-				<div class="workshop_item workshop_label">Workshop Notes</div>
-			</div>';
-		foreach( $slots as $slot ) {
-			$s = $slot->slug;
-			$CurrentWorkshop = '(Select a Workshop)';
-			$Selection_id = '';
-
-			if( isset($workshopSelection[$s] ) ) {
-				if( count( $workshopSelection[$s] ) > 1 ) {
-					$CurrentWorkshop = 'Error<span style="font-size: x-small; padding-left: 0.25rem;">(Multiple classes purchased for this timeslot.)</span>';
-				} elseif( $workshopSelection[$s][0] ) {
-					/* If there's only 1 selection, it is  "Selected". */
-					$Selection_id = $workshopSelection[$s][0];
-					$CurrentWorkshop = '<a href="'.get_permalink( $Selection_id ).'"><img src="'.get_the_post_thumbnail_url( $Selection_id ).'">'.get_post( $Selection_id )->post_title.'</a>';
+		if( $prefix == "waitlist_" ) {
+			echo '<div class="waitlist_schedule">';
+				echo '<h2 class="waitlist_title">Current Waitlists</h2>';
+				echo '<div id="'.$prefix.'workshop_headers" class="waitlist_timeslot">
+					<div class="waitlist_item workshop_label waitlist_time">Timeslot</div>
+					<div class="waitlist_item workshop_label waitlist_name">Workshop</div>
+					<div class="waitlist_item workshop_label waitlist_position">Position</div>
+					<div class="waitlist_item workshop_label waitlist_change">Change Waitlist</div>
+				</div>';
+			
+				foreach( $waitlistSelection as $waitlist ) {
+					$CurrentWorkshop = '<a href="'.get_permalink( $waitlist ).'"><img src="'.get_the_post_thumbnail_url( $waitlist ).'">'.get_post( $waitlist )->post_title.'</a>';
+					echo '<div class="waitlist_timeslot">';
+						echo '<p class="waitlist_item waitlist_time">'.get_the_terms(get_post( $waitlist ), 'timeslot')[0]->name.'</p>';
+						echo '<p class="waitlist_item waitlist_name">'.$CurrentWorkshop.'</p>';
+						echo '<p id="'.$prefix.$waitlist.'_position" class="waitlist_item waitlist_position">'.cc_waitlist_getPosition($waitlist).'</p>';
+						echo '<p class="waitlist_item waitlist_change">'.DisplayWaitlistButton($waitlist, $prefix).'</p>';
+	//					echo "<script>cc_waitlist_getStatus(".$waitlist.", '".$prefix."');</script>";
+					echo '</div>';
 				}
-	   		}
-
-			$timeslotHasWorkshops = false;
-			$Output .= '<div id="workshop_timeslot_'.$s.'" class="workshop_timeslot" style="display: none;">
-				<div class="workshop_item">'.$slot->name.'</div>';
-			if( strlen( $slot->name ) < 10 ) {
-				// dosomething
-				$timeslotHasWorkshops = true;
-				$Output .= '<script>document.getElementById("workshop_timeslot_'.$s.'").classList.add("workshop_item_solo");</script>';
-			} else {
-			$Output .= '<div class="workshop_item">'.$CurrentWorkshop.'</div>
-				<select id="timeslot_'.$s.'" name="timeslot_'.$s.'" class="workshop_item timeslot" form="workshopSelection">
-					<option value="0">--- Select Workshop ---</option>';
-					foreach( $workshops as $workshop ) {
-						$workshopIgnoreTagId = esc_attr( get_option('cc_workshop_ignore_tags') );
-						$noWorkshopSelection = has_term( $workshopIgnoreTagId, 'product_tag', $workshop['id'] );
-						
-						if( get_the_terms( $workshop['id'], 'timeslot' )[0]->slug == $s && !$noWorkshopSelection ) { 
-							$timeslotHasWorkshops = true;
-							
-							$IsGrayedOut = $IsSoldOut = $IsSelected = $IsStarred = '';
-							if( $workshop['id'] == $Selection_id ) { $IsSelected = ' selected="true"'; $IsStarred = ' **'; }
-							if( $workshop['stock_quantity'] < 1 ) { $IsGrayedOut = ' class="item_grayedout"'; $IsSoldOut = ' (Sold Out)'; } 
-
-							$Output .= '<option value="'.$workshop['id'].'"'.$IsSelected.$IsGrayedOut.'>';
-							$Output .= $workshop['name'].$IsStarred.$IsSoldOut.'</option>';
-						}
-					}
-				$Output .= '</select>';			
-			
-				$Output .= '<div class="workshop_item">';
-				foreach( $workshops as $workshop ) {
-					if( get_the_terms( $workshop['id'], 'timeslot' )[0]->slug == $s ) { 
-						$IsSelected = ' style="display:none;"';
-						if( $workshop['id'] == $Selection_id ) { $IsSelected = ''; }
-						
-						$Output .= '<div id="workshop_notes_item_'.$workshop['id'].'" class="workshop_notes_'.$s.'"'.$IsSelected.'>';
-						
-						/* Conditionally display the Waitlist button */
-						if( $workshop['stock_quantity'] < 1 ) {
-							/* hide, if "noWaitlist" */
-							if( has_term('noWaitlist', 'product_tag', $workshop['id'] ) ) { /* do something */ }
-							else { $Output .= DisplayWaitlistButton( $workshop['id'] ); }
-						}
-						$Output .= '</div>';
-					}
-				}
-				$Output .= '<script>
-					try {
-						const selectElement_'. $workshop['id'].' = document.getElementById("timeslot_'.$s.'");
-
-						selectElement_'. $workshop['id'].'.addEventListener("change", (event) => {
-							var workshopNotes = document.getElementsByClassName( "workshop_notes_'.$s.'" );
-							for( var n = 0; n < workshopNotes.length; n++ ) {
-								workshopNotes[n].style.display = "none";
-							}
-
-							document.getElementById( "workshop_notes_item_"+event.target.value ).style.display = "flex";
-						});
-					} catch (error) {
-						/* do something */
-					}		
-				</script>';
-				$Output .= '</div>';
-			}
-			if( $timeslotHasWorkshops ) { $Output .= '<script>document.getElementById("workshop_timeslot_'.$s.'").style.display = "flex";</script>'; }
-			$Output .= '</div>';
-			
-			
-		} /* End Timeslot */
-		$Output .= '<form action="#" method="post" id="workshopSelection">
-			<input type="hidden" name="order" id="order" value="order">
-			<input type="submit" value="Save Workshop Selections" class="btn">
-		</form>';
-		
-		foreach( $waitlistSelection as $waitlist ) {
-			$Output .= "<script>cc_waitlist_getStatus(".$waitlist.");</script>";
+			echo '</div>';
 		}
+		else {
 
-		return $Output;				
+
+			/* Draw the workshop selections */
+			echo '<div class="workshop-selections">Workshop Selections:<br>'. json_encode($workshopSelection) .'</div>';
+	//json_encode($workshopSelection) .'</div>';
+
+			/* Draw the Slots */
+			echo '<div class="workshop_schedule">';
+			$selectionTitle = 'Workshop';
+			if( $prefix == "ah_" ) { $selectionTitle = 'After-Hours'; }
+			echo '<h2 class="waitlist_title">'.$selectionTitle.' Selections</h2>';
+			
+				/* Draw the Headers */
+				echo '<div id="'.$prefix.'workshop_headers" class="workshop_timeslot">
+					<div class="workshop_item workshop_label workshop_name">Timeslot</div>
+					<div class="workshop_item workshop_label workshop_current">My Registration</div>
+					<div class="workshop_item workshop_label timeslot">New Registration</div>
+					<div class="workshop_item workshop_label workshop_notes">Workshop Notes</div>
+				</div>';
+			foreach( $slots as $slot ) {
+				$s = $slot->slug;
+				$CurrentWorkshop = '(Select a Workshop)';
+				$Selection_id = '';
+
+				if( isset($workshopSelection[$s] ) ) {
+					if( count( $workshopSelection[$s] ) > 1 ) {
+						$CurrentWorkshop = 'Error<span style="font-size: x-small; padding-left: 0.25rem;">(Multiple classes purchased for this timeslot.)</span>';
+					} elseif( $workshopSelection[$s][0] ) {
+						/* If there's only 1 selection, it is  "Selected". */
+						$Selection_id = $workshopSelection[$s][0];
+						$CurrentWorkshop = '<a href="'.get_permalink( $Selection_id ).'"><img src="'.get_the_post_thumbnail_url( $Selection_id ).'">'.get_post( $Selection_id )->post_title.'</a>';
+					}
+				}
+
+				$timeslotHasWorkshops = false;
+				$cosmeticName = explode( ": ", $slot->name );
+				if( $cosmeticName[1] ) { $cosmeticName = $cosmeticName[1]; }
+				else { $cosmeticName = $cosmeticName[0]; }
+
+				echo '<div id="'.$prefix.'workshop_timeslot_'.$s.'" class="workshop_timeslot" style="display: none;">
+					<div class="workshop_item workshop_name">'.$cosmeticName.'</div>';
+				if( strlen( $slot->name ) < 10 ) {
+					// dosomething
+					$timeslotHasWorkshops = true;
+					echo '<script>document.getElementById("'.$prefix.'workshop_timeslot_'.$s.'").classList.add("workshop_item_solo");</script>';
+				} else {
+				echo '<div class="workshop_item workshop_current">'.$CurrentWorkshop.'</div>
+					<select id="'.$prefix.'timeslot_'.$s.'" name="'.$prefix.'timeslot_'.$s.'" class="workshop_item timeslot" form="'.$prefix.'workshopSelection">
+						<option value="0">--- Select Workshop ---</option>';
+						foreach( $workshops as $workshop ) {						
+							if( get_the_terms( $workshop['id'], 'timeslot' )[0]->slug == $s ) { 
+								$timeslotHasWorkshops = true;
+
+								$IsGrayedOut = $IsSoldOut = $IsSelected = $IsStarred = '';
+								if( $workshop['id'] == $Selection_id ) { $IsSelected = ' selected="true"'; $IsStarred = ' **'; }
+								if( !$workshop['is_in_stock'] ) { $IsGrayedOut = ' class="item_grayedout"'; $IsSoldOut = ' (Sold Out)'; } 
+
+								echo '<option value="'.$workshop['id'].'"'.$IsSelected.$IsGrayedOut.'>';
+								echo $workshop['name'].$IsStarred.$IsSoldOut.'</option>';
+							}
+						}
+					echo '</select>';			
+
+					echo '<div class="workshop_item workshop_notes">';
+					foreach( $workshops as $workshop ) {
+						if( get_the_terms( $workshop['id'], 'timeslot' )[0]->slug == $s ) { 
+							$IsSelected = ' style="display:none;"';
+							if( $workshop['id'] == $Selection_id ) { $IsSelected = ''; }
+
+							echo '<div id="'.$prefix.'workshop_notes_item_'.$workshop['id'].'" class="workshop_notes_'.$s.'"'.$IsSelected.'>';
+
+							/* Conditionally display the Waitlist button */
+							if( !$workshop['is_in_stock'] ) {
+								/* hide, if "noWaitlist" */
+								if( has_term('noWaitlist', 'product_tag', $workshop['id'] ) ) { /* do something */ }
+								else { echo DisplayWaitlistButton( $workshop['id'], $prefix ); }
+							}
+							echo '</div>';
+						}
+					}
+					echo '<script>
+						try {
+							const selectElement_'. $workshop['id'].' = document.getElementById("'.$prefix.'timeslot_'.$s.'");
+
+							selectElement_'. $workshop['id'].'.addEventListener("change", (event) => {
+								var workshopNotes = document.getElementsByClassName( "workshop_notes_'.$s.'" );
+								for( var n = 0; n < workshopNotes.length; n++ ) {
+									workshopNotes[n].style.display = "none";
+								}
+
+								document.getElementById( "'.$prefix.'workshop_notes_item_"+event.target.value ).style.display = "flex";
+							});
+						} catch (error) {
+							/* do something */
+						}		
+					</script>';
+					echo '</div>';
+				}
+				if( $timeslotHasWorkshops ) { echo '<script>document.getElementById("'.$prefix.'workshop_timeslot_'.$s.'").style.display = "flex";</script>'; }
+				echo '</div>';
+
+
+			} /* End Timeslot */
+			echo '<form action="#" method="post" id="'.$prefix.'workshopSelection">
+				<input type="hidden" name="'.$prefix.'order" id="'.$prefix.'order" value="'.$prefix.'order">
+				<input type="submit" value="Save Workshop Selections" class="btn">
+			</form>';
+
+			foreach( $waitlistSelection as $waitlist ) {
+				echo "<script>cc_waitlist_getStatus(".$waitlist.");</script>";
+			}
+			echo "</div>";
+		}
+		
+		return ob_get_clean();
 	}
 	else {
-		$Output = 'Please log in.';
-		return $Output;
+		echo 'Please log in.';
+		return ob_get_clean();
 	}
-} add_shortcode('DisplayWorkshopSelection', 'DisplayWorkshopSelection');
+} add_shortcode('WorkshopSelection', 'DisplayWorkshopSelection');
 function get_workshopSelection() {
 	$workshopTagIDs = explode(',', esc_attr(get_option('cc_workshop_tags')) );
 
@@ -315,6 +372,8 @@ function get_workshopSelection() {
 	$args = array(
     	'product_tag' => array( $workshopTagName ),
     	'limit' => -1,
+		'orderby'	=> 'title',
+		'order'	=> 'ASC',
 	);
 	$w = wc_get_products( $args );
 	
@@ -322,6 +381,7 @@ function get_workshopSelection() {
 	foreach( $w as $key => $workshop ) {
 		$workshops[$key]= $workshop->get_data();
 		$workshops[$key]['presenter_id'] = $workshop->get_meta('presenter_id');
+		$workshops[$key]['is_in_stock'] = $workshop->is_in_stock();
 	}
 
 	/* Build list of All Slots, Workshop Selections */
@@ -391,14 +451,14 @@ function get_workshopSelection() {
 					}
 				}
 			}
-			foreach( $waitlists as $waitlist ) {
+			foreach( $waitlists as $key => $waitlist ) {
 				/* If customer=waitlist=workshop match... */
 				if( $waitlist->customerId == get_current_user_id() && $waitlist->workshopId == $workshops[$w]['id'] ) {
 
 					/* If this item hasn't been removed... */
 					if( $waitlist->removalDate == '' ) {
 						/* Add to the waitlistSelection */
-						$waitlistSelection []= $workshops[$w]['id'];
+						$waitlistSelection[$key] = $workshops[$w]['id'];
 					}
 				}
 			}
@@ -410,3 +470,4 @@ function get_workshopSelection() {
 	
 	return [ $workshops, $slots, $orders, $workshopSelection, $waitlistSelection ];
 }
+

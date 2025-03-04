@@ -209,6 +209,22 @@ function cc_waitlist_getLists( $workshopId = null, $jsonMode = 'false' ) { // Re
 	if($jsonMode == 'true') { echo json_encode( $response ); }
 	else { return $response; }
 }
+function cc_waitlist_getPosition( $workshopId, $jsonMode = 'false' ) { // Returns object/JSON of Ticket DB 
+	global $wpdb, $cc_waitlist_db_version, $cc_waitlist_table_name;
+	
+
+	$results = $wpdb->get_results( "SELECT * FROM " .$cc_waitlist_table_name. " WHERE workshopId=" .$workshopId );
+
+	/* If we're looking for a workshop, we probably don't want ones that have been removed... */
+	foreach( $results as $key => $result ) {
+		if( $result->removalDate == '' && $result->customerId == get_current_user_id() ) {
+			$response = $key+1;
+		}
+	}
+	
+	if($jsonMode == 'true') { echo json_encode( $response ); }
+	else { return $response; }
+}
 function cc_waitlist_displayTable()  { // Displays Ticket DB
 	global $wpdb, $cc_waitlist_db_version, $cc_waitlist_table_name;
 	$waitlists = cc_waitlist_getLists();
@@ -280,9 +296,12 @@ function cc_waitlist_displayTable()  { // Displays Ticket DB
 	
 	echo '</div>';
 }
-function DisplayWaitlistButton( $workshopId ) {
-	$Output = '<a id="waitlist-icon-'. $workshopId .'-add" style="display: block;" href="javascript:cc_waitlist_add_button(\''.$workshopId.'\');">Add to Waitlist</a>';
-	$Output .= '<a id="waitlist-icon-'. $workshopId .'-remove" style="display: none;" href="javascript:cc_waitlist_remove_button(\''.$workshopId.'\');">Remove from Waitlist</a>';
+function DisplayWaitlistButton( $workshopId, $ah_prefix ) {
+	$addRemove = ['block','none'];
+	if( $ah_prefix == 'waitlist_' ) { $addRemove = ['none','block']; }
+	
+	$Output = '<a id="'.$ah_prefix.'waitlist-icon-'. $workshopId .'-add" style="display: '.$addRemove[0].';" href="javascript:cc_waitlist_add_button(\''.$workshopId.'\');">Add to Waitlist</a>';
+	$Output .= '<a id="'.$ah_prefix.'waitlist-icon-'. $workshopId .'-remove" style="display: '.$addRemove[1].';" href="javascript:cc_waitlist_remove_button(\''.$workshopId.'\');">Remove from Waitlist</a>';
 	
 	return $Output;
 }

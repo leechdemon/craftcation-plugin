@@ -122,3 +122,23 @@ function workshop_remove_hyphens($title) {
 	
 	return $output;
 } add_action('the_title','workshop_remove_hyphens');
+
+function DisplayTimeslotsBySlug( $atts ) {
+	$filter = shortcode_atts( array(
+        'id' => '',
+    ), $atts );
+	extract($filter);
+	
+	$term_list = get_the_terms( $id, 'timeslot');
+
+	$slugs = array_column($term_list, 'slug');
+	asort($slugs);
+	$names = array_column($term_list, 'name');
+	asort($names);
+
+	foreach( $slugs as $key => $term ) {
+		$output .= '<a class="cc_workshop_timeslot" href="'.get_site_url().'/timeslot/'.$slugs[$key].'">'.$names[$key].'</a>';
+	}
+		
+	return $output;
+} add_shortcode( 'DisplayTimeslotsBySlug', 'DisplayTimeslotsBySlug' );

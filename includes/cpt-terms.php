@@ -3,9 +3,9 @@ require_once plugin_dir_path(__FILE__) . '../craftcation.php';
 
 function WSCategory_Taxonomy() {
 	if(!taxonomy_exists('wscategory')) {
-		$Display = 'WS Category';
+		$Display = 'Category';
 	//	$Displays = $Display;
-		$Displays = 'WS Categories';
+		$Displays = 'Categories';
 		$Lower = 'wscategory';
 	//	$Lowers = $Lower;
 		$Lowers = 'wscategories';
@@ -220,10 +220,16 @@ function TaxSidebar( $atts ) {
 			if( $Term->parent == 0 ) {
 				$Output .= '<ul>';
 				$Output .= '<a class="'.CheckIfActiveTax( $atts['tax'], $Term).'" href="'.get_term_link( $Term ).'">'.$Term->name.'</a>';
-//				$Output.= '<script>console.log('.$Terms.');</script>';
+				$firstPass = true;
 				foreach($Terms as $T) {
 					if( $T->parent ) {
 						if( $T->parent == $Term->term_id ) {
+							/* If there's subcategories, display an "All" link at the top. */
+							if( $firstPass ) { 
+								$firstPass = false;
+								$Output .= '<li><a class="'.CheckIfActiveTax( $atts['tax'], $Term).'" href="'.get_term_link( $Term ).'">All '.$Term->name.'</a></li>';
+							}
+
 							$Output .= '<li><a class="'.CheckIfActiveTax( $atts['tax'], $T).'" href="'.get_term_link( $T ).'">'.$T->name.'</a></li>';
 						}
 					}
@@ -234,8 +240,26 @@ function TaxSidebar( $atts ) {
 	}
 	else { $Output .= '<a href="'.site_url().'/all-workshops">All Workshops</a>'; }
 	$Output .= '</div>';
+
 	return $Output;
 	
 //	return '<div class="PresenterByID" style="width: 25%; text-align: center;"><a href="'.get_the_permalink($atts['tid']).'"><h4>'.$Terms->post_title.'</h4><img style="padding: 0.5rem 2rem;" src="'. get_the_post_thumbnail_url( $atts['tid'] ).'"></a></div>';
 	
 } add_shortcode('TaxSidebar', 'TaxSidebar');
+function AutoExpandTaxSidebar() {
+	echo "<script>setTimeout(() => {
+		var ws_terms = document.getElementsByClassName('ws_terms');
+		
+		/* Don't try this unless we find this class */
+		if( ws_terms.length > 0 ) {
+			var active = document.getElementsByClassName('active')[0];
+			if( active.parentElement.tagName == 'LI' ) { var activeList = active.parentElement.parentElement; }
+			else { var activeList = active.parentElement; }
+
+			for (var i = 0; i < activeList.children.length; i++) {
+				if( i == 0 ) { activeList.children[i].classList.add('active'); }
+				else { activeList.children[i].style.display = 'list-item'; }
+			}
+		}
+	}, '600');</script>";
+} add_action('wp_footer','AutoExpandTaxSidebar');
