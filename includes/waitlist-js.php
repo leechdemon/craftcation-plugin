@@ -1,7 +1,7 @@
 <script>
 	function cc_waitlist_add_button( workshopId, prefix, status ) {
-		document.getElementById( 'waitlist-icon-' + workshopId + '-add' ).style.display = 'none';
-		document.getElementById( 'waitlist-icon-' + workshopId + '-remove' ).style.display = 'none';
+		document.getElementById( prefix + 'waitlist-icon-' + workshopId + '-add' ).style.display = 'none';
+		document.getElementById( prefix + 'waitlist-icon-' + workshopId + '-remove' ).style.display = 'none';
 		
 		if( !status ) {
 			cc_waitlist_getStatus( workshopId, prefix, 'cc_waitlist_add_button' );
@@ -9,7 +9,7 @@
 			cc_waitlist_add( workshopId );
 		}
 	}
-	function cc_waitlist_add( workshopId ) {
+	function cc_waitlist_add( workshopId, prefix ) {
 		var today = waitlist_dateFormat();
 		jQuery.ajax({
 			type: 'POST',
@@ -23,7 +23,7 @@
 				"removalDate": ''
 			},
 			success: function (data) {
-				cc_waitlist_getStatus( workshopId );
+				cc_waitlist_getStatus( workshopId, prefix );
 			}
 		});
 	}
@@ -69,12 +69,17 @@
 			},
 			success: function ( data ) {
 				var status = JSON.parse(data);
+				var div;
 				if( status == "unlisted" ) {
-					document.getElementById( prefix + 'waitlist-icon-' + workshopId + '-add' ).style.display = 'block';
-					document.getElementById( prefix + 'waitlist-icon-' + workshopId + '-remove' ).style.display = 'none';
+					div = document.getElementById( prefix + 'waitlist-icon-' + workshopId + '-add' );
+					if( div ) { div.style.display = 'block'; }
+					div = document.getElementById( prefix + 'waitlist-icon-' + workshopId + '-remove' );
+					if( div ) { div.style.display = 'none'; }
 				} else if (status != "" ) {
-					document.getElementById( prefix + 'waitlist-icon-' + workshopId + '-add' ).style.display = 'none';
-					document.getElementById( prefix + 'waitlist-icon-' + workshopId + '-remove' ).style.display = 'block';
+					div = document.getElementById( prefix + 'waitlist-icon-' + workshopId + '-add' );
+					if( div ) { div.style.display = 'none'; }
+					div = document.getElementById( prefix + 'waitlist-icon-' + workshopId + '-remove' );
+					if( div ) { div.style.display = 'block'; }
 				}
 				
 				if( callback ) {
@@ -90,7 +95,7 @@
 		if( !status ) {
 			cc_waitlist_getStatus( workshopId, prefix, 'cc_waitlist_remove_button' );
 		} else if ( status != "unlisted" && status != "" ) {
-			cc_waitlist_remove( workshopId, status );
+			cc_waitlist_remove( workshopId, prefix, status );
 		}
 	}
 	function cc_waitlist_deleteRow_button( rowId ) {
@@ -107,7 +112,7 @@
 			}
 		});
 	}
-	function cc_waitlist_remove( workshopId, waitlistDate ) {
+	function cc_waitlist_remove( workshopId, prefix, waitlistDate ) {
 		var today = waitlist_dateFormat();
 		
 		jQuery.ajax({
@@ -121,7 +126,7 @@
 				"removalDate": today
 			},
 			success: function (data) {
-				cc_waitlist_getStatus( workshopId );
+				cc_waitlist_getStatus( workshopId, prefix );
 			}
 		});
 	}
