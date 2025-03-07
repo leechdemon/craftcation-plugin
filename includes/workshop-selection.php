@@ -1,6 +1,6 @@
 <?php 
 require_once plugin_dir_path(__FILE__) . '../craftcation.php';
-require_once plugin_dir_path(__FILE__) . 'waitlist-js.php';
+//require_once plugin_dir_path(__FILE__) . 'waitlist-js.php';
 
 //global $workshops, $slots, $orders, $workshopSelection, $waitlistSelection;
 

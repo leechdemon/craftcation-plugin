@@ -6,6 +6,19 @@ Author: Leechdemon
 Version: 1.3.00
 */
 
+
+//$roles_to_delete = array('subscriber', 'customer');
+//$users = get_users(array('role__in' => $roles_to_delete));
+//
+//Test($users);
+//
+//foreach ($users as $user) {
+//    wp_delete_user($user->ID);
+//}
+
+
+
+
 require_once plugin_dir_path(__FILE__) . 'tools.php';
 
 //require_once plugin_dir_path(__FILE__) . 'includes/db-tickets.php';
