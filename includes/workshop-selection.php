@@ -2,6 +2,8 @@
 require_once plugin_dir_path(__FILE__) . '../craftcation.php';
 //require_once plugin_dir_path(__FILE__) . 'waitlist-js.php';
 
+//global $workshops, $slots, $orders, $workshopSelection, $waitlistSelection;
+
 function Process_WorkshopSelectionUpdates( $atts ) {
 	$filter = shortcode_atts( array(
         'prefix' => 'ws_',
@@ -27,13 +29,8 @@ function Process_WorkshopSelectionUpdates( $atts ) {
 			$t = explode('_',$key);
 			$search = $prefix.'timeslot';
 			
-			Test($t[0]);
-			Test($t[1]);
-			Test($t[2]);
-			
 			if( $t[0] == explode('_',$prefix)[0] && $t[1] == 'timeslot' ) {
 				/* Process Timeslot items */
-				Test("---");
 				
 				/* If workshopSelection item is unchanged/not a duplicate, prevent it from being added to the New Order. */
 				$notDuplicate = true;
@@ -45,31 +42,36 @@ function Process_WorkshopSelectionUpdates( $atts ) {
 					}
 				}
 								
-				/* Check for form errors... */
-				if( $item > 0 && $notDuplicate ) { 
-					$stockCheck = wc_get_product( $item );
-					$waitlists = cc_waitlist_getLists( $item );
-					
-					/* If it's still in stock... (or waitlist position is available)*/
-					if ( $stockCheck->is_in_stock() || ( $waitlists[0]->customerId == get_current_user_id() && $waitlists[0]->notificationDate != '' ) ) { 
-						/* Add the item to the order */
-						$hasItems = true;
-						$order_req[ $t[2] ] = $item;
+				/* If we want to remove an item... */
+				if( $item == 0 && $workshopSelection[ $t[2] ] != 0 ) {
+					$hasRefunds = true;
+					$refund_req[ $t[2] ] = $workshopSelection[ $t[2] ];
+				} else {
+					/* Check for form errors... */
+					if( $item > 0 && $notDuplicate ) { 
+						$stockCheck = wc_get_product( $item );
+						$waitlists = cc_waitlist_getLists( $item );
 
-						/* If we're adding an item, and there's already a workshopSelection... */
-						if( $workshopSelection[ $t[2] ] ) {
-							$hasRefunds = true;
-							$refund_req[ $t[2] ] = $workshopSelection[ $t[2] ];
-						}
-						
-						if( $waitlists[0]->customerId == get_current_user_id() ) {
-							date_default_timezone_set('America/Detroit');
-							$removalDate = date( 'm/d/Y H:i:s', time() );
+						/* If it's still in stock... (or waitlist position is available)*/
+						if ( $stockCheck->is_in_stock() || ( $waitlists[0]->customerId == get_current_user_id() && $waitlists[0]->notificationDate != '' ) ) { 
+							/* Add the item to the order */
+							$hasItems = true;
+							$order_req[ $t[2] ] = $item;
 
-							cc_waitlist_remove( $removalDate, $waitlists[0]->workshopId, $waitlists[0]->customerId, $waitlists[0]->waitlistDate );
+							/* If we're adding an item, and there's already a workshopSelection... */
+							if( $workshopSelection[ $t[2] ] ) {
+								$hasRefunds = true;
+								$refund_req[ $t[2] ] = $workshopSelection[ $t[2] ];
+							}
+
+							if( $waitlists[0]->customerId == get_current_user_id() ) {
+								date_default_timezone_set('America/Detroit');
+								$removalDate = date( 'm/d/Y H:i:s', time() );
+
+								cc_waitlist_remove( $removalDate, $waitlists[0]->workshopId, $waitlists[0]->customerId, $waitlists[0]->waitlistDate );
+							}
 						}
 					}
-
 				}
 
 			}
@@ -161,6 +163,8 @@ function WorkshopSelection_RefundItems( $refund_req ) {
 	}
 }
 function DisplayWorkshopSelection( $atts ) {
+	global $workshops, $slots, $orders, $workshopSelection, $waitlistSelection;
+
 	require_once plugin_dir_path(__FILE__) . 'waitlist-js.php';
 	ob_start();
 	
@@ -174,41 +178,27 @@ function DisplayWorkshopSelection( $atts ) {
 	if( is_user_logged_in() ) {
 		/* Build list of workshopsSelection */
 		$w = get_workshopSelection();
-		$workshops = [];
-		$sessionIgnoreTagId = esc_attr( get_option('cc_session_ignore_tags') );
-		foreach( $w[0] as $key => $workshop ) {
-			$noWorkshopSelection = has_term( $sessionIgnoreTagId, 'product_tag', $workshop['id'] );
-			if( $prefix != "ws_" ) {
-				if( $noWorkshopSelection ) { array_push( $workshops, $workshop ); }
-			} else { 
-				if ( !$noWorkshopSelection ) { array_push( $workshops, $workshop ); }
-			}
-		}	
+//	}
+//		}
+//function ASD123() {
+//if(1==1){
+		$workshops = $w[0];
+//		$sessionIgnoreTagId = esc_attr( get_option('cc_session_ignore_tags') );
+//		foreach( $w[0] as $key => $workshop ) {		
+////			Test( $key );
+////			Test( $workshop['id'] );
+//			$noWorkshopSelection = has_term( $sessionIgnoreTagId, 'product_tag', $workshop['id'] );
+//			if( $prefix != "ws_" ) {
+//				if( $noWorkshopSelection ) { array_push( $workshops, $workshop ); }
+//			} else { 
+//				if ( !$noWorkshopSelection ) { array_push( $workshops, $workshop ); }
+//			}
+//		}	
 		$slots = $w[1];
 		$orders = $w[2];
 		$workshopSelection = $w[3];
 		$waitlistSelection = $w[4];
 		
-		foreach( $waitlistSelection as $key => $workshopID ) {
-			$workshop = wc_get_product( $workshopID );
-			$terms = get_the_terms( $workshopID , 'timeslot' );
-
-			/* Check if there's multiple terms */
-			if( count($terms) > 1 ) {
-				Test( $workshop->get_name() );
-				Test( '- Type: ' . $workshop->get_type() );
-				Test( '- Timeslots: ' . count($terms) );
-
-				/* Check if it's a simple product type */
-				if( $workshop->get_type() == 'simple' ) {
-					
-					/* Check if the product already exists */
-					$title = $workshop->get_name();
-					
-					
-				}
-			}
-		}
 					
 		/* Display Things */
 		/* Display Things */
@@ -239,7 +229,7 @@ function DisplayWorkshopSelection( $atts ) {
 				</div>';
 			
 				foreach( $waitlistSelection as $waitlist ) {
-					$Cosmetic_id = get_post_meta( $waitlist, 'workshop_id', true );
+					$Cosmetic_id = GetWorkshopIDFromSessionID( $waitlist );
 						
 					$CurrentWorkshop = '<a href="'.get_permalink( $Cosmetic_id ).'"><img src="'.get_the_post_thumbnail_url( $Cosmetic_id ).'">'.get_post( $Cosmetic_id )->post_title.'</a>';
 					echo '<div class="waitlist_timeslot">';
@@ -283,8 +273,8 @@ function DisplayWorkshopSelection( $atts ) {
 					} elseif( $workshopSelection[$s][0] ) {
 						/* If there's only 1 selection, it is  "Selected". */
 						$Selection_id = $workshopSelection[$s][0];
-						$Cosmetic_id = get_post_meta( $Selection_id, 'workshop_id', true );
 						
+						$Cosmetic_id = GetWorkshopIDFromSessionID( $Selection_id );
 						$CurrentWorkshop = '<a href="'.get_permalink( $Cosmetic_id ).'"><img src="'.get_the_post_thumbnail_url( $Cosmetic_id ).'">'.get_post( $Cosmetic_id )->post_title.'</a>';
 					}
 				}
@@ -304,11 +294,10 @@ function DisplayWorkshopSelection( $atts ) {
 				echo '<div class="workshop_item workshop_current">'.$CurrentWorkshop.'</div>
 					<select id="'.$prefix.'timeslot_'.$s.'" name="'.$prefix.'timeslot_'.$s.'" class="workshop_item timeslot" form="'.$prefix.'workshopSelection">
 						<option value="0">--- Select Workshop ---</option>';
-						foreach( $workshops as $workshop ) {						
+						foreach( $workshops as $workshop ) {
 							if( get_the_terms( $workshop['id'], 'timeslot' )[0]->slug == $s ) { 
-								$Cosmetic_id = get_post_meta( $workshop['id'], 'workshop_id', true );
-//								$SessionID = $workshop['id'];
-//								$Selection_id = get_post_meta( $SessionID, 'workshop_id', true );
+								$Cosmetic_id = $workshop['id'];
+//								$Cosmetic_id = GetWorkshopIDFromSessionID( $workshop['id'] );
 
 								$timeslotHasWorkshops = true;
 
@@ -374,13 +363,14 @@ function DisplayWorkshopSelection( $atts ) {
 		}
 		
 		return ob_get_clean();
-	}
-	else {
+	} else {
 		echo 'Please log in.';
 		return ob_get_clean();
 	}
 } add_shortcode('WorkshopSelection', 'DisplayWorkshopSelection');
 function get_workshopSelection() {
+//	global $workshops, $slots, $orders, $workshopSelection, $waitlistSelection;
+
 	$sessionTagIDs = explode(',', esc_attr(get_option('cc_session_tags')) );
 
 	/* I'm not sure why this is better thanjust using the workshop tags from above. Maybe if the tag was deleted? But this is pre-release, so probably not. Maybe to remove typos, or to have access to the tag, IE "getTagBy(cc_workshop_tags)"? */
@@ -398,101 +388,116 @@ function get_workshopSelection() {
 	}	
 	
 	/* Build list of All Workshops */
-	$args = array(
-    	'product_tag' => array( $workshopTagName ),
-    	'limit' => -1,
-		'orderby'	=> 'title',
-		'order'	=> 'ASC',
-	);
-	$w = wc_get_products( $args );
-	
-	$workshops = array();
-	foreach( $w as $key => $workshop ) {
-		$workshops[$key]= $workshop->get_data();
-		$workshops[$key]['presenter_id'] = $workshop->get_meta('presenter_id');
-		$workshops[$key]['is_in_stock'] = $workshop->is_in_stock();
-	}
+	if( !isset($workshops) ) {
+//		Test("Setting Workshops");
+		$args = array(
+			'product_tag' => array( $workshopTagName ),
+//			'limit' => 100,
+			'limit' => -1,
+			'orderby'	=> 'title',
+			'order'	=> 'ASC',
+		);
+		$w = wc_get_products( $args );
+
+		$workshops = array();
+		foreach( $w as $key => $workshop ) {
+			$workshops[$key]= $workshop->get_data();
+			$workshops[$key]['presenter_id'] = $workshop->get_meta('presenter_id');
+			$workshops[$key]['is_in_stock'] = $workshop->is_in_stock();
+		}
+	} else { Test($workshops); }
 
 	/* Build list of All Slots, Workshop Selections */
-	$slots = get_terms( array(
-			'taxonomy'	=> 'timeslot',
-			'orderby'	=> 'slug',
-			'limit' => -1,
-			'hide_empty' => false,
-	) );
+	if( !isset($slots) ) {
+		$slots = get_terms( array(
+				'taxonomy'	=> 'timeslot',
+				'orderby'	=> 'slug',
+				'limit' => -1,
+				'hide_empty' => false,
+		) );
+	}
 	
 	if( is_user_logged_in() ) {
 		/* Build list of All Orders for current customer, status = "Processing" */
-		$args = array(
-			'customer_id' => get_current_user_id(),
-	//		'status' => 'processing',
-			'limit' => -1,
-	//			'order' => 'DESC',
-	//			'order' => 'ASC',
-			'return' => 'ids',
-			'meta_query' => array(
-				array(
-					'key' => '_product_id', // Meta key to filter by product ID
-					'value' => $product_ids, // Product IDs to filter
-					'compare' => 'IN', // Use 'IN' to find orders that contain any of the specified product IDs
+		if( !isset($orders) ) {
+			$args = array(
+				'customer_id' => get_current_user_id(),
+		//		'status' => 'processing',
+				'limit' => -1,
+		//			'order' => 'DESC',
+		//			'order' => 'ASC',
+				'return' => 'ids',
+				'meta_query' => array(
+					array(
+						'key' => '_product_id', // Meta key to filter by product ID
+						'value' => $product_ids, // Product IDs to filter
+						'compare' => 'IN', // Use 'IN' to find orders that contain any of the specified product IDs
+					),
 				),
-			),
-		);
-		$orders = wc_get_orders($args);
+			);
+			$orders = wc_get_orders($args);
+		}
 
 		/* get Waitlists */
-		$waitlists = cc_waitlist_getLists();
+		if( !isset($waitlists) ) {
+			$waitlists = cc_waitlist_getLists();
+		}
 
 		/* For each workshop item (variable, large amount (100+?) */
-		$workshopSelection = array();
-		foreach($workshops as $w => $workshop) {
+		if( !isset($workshopSelection) ) {
+			$workshopSelection = array();
+			foreach($workshops as $w => $workshop) {
 
-			/* For each customer order... */
-			foreach($orders as $key => $order) {
-				$thisOrder = new WC_Order( $order );
+				/* For each customer order... */
+				foreach($orders as $key => $order) {
+					$thisOrder = new WC_Order( $order );
 
-				/* ... For each line item... */
-				foreach ( $thisOrder->get_items() as $item_id => $item ) {
-					/* ...if it matches a Workshop Product ID... */
-					if( $item['product_id'] == $workshops[$w]['id'] ) {
-						$itemReturned = false;
+					/* ... For each line item... */
+					foreach ( $thisOrder->get_items() as $item_id => $item ) {
+						/* ...if it matches a Workshop Product ID... */
+						if( $item['product_id'] == $workshops[$w]['id'] ) {
+							
+							$itemReturned = false;
 
-						/* ... See if the item hasn't been returned yet... */
-						foreach( $thisOrder->get_refunds() as $refund ) {
-							foreach ( $refund->get_items() as $refunded_item ) {
-								if ( $refunded_item['product_id'] === $item['product_id'] ) {
+							/* ... See if the item hasn't been returned yet... */
+							foreach( $thisOrder->get_refunds() as $refund ) {
+								foreach ( $refund->get_items() as $refunded_item ) {
+									if ( $refunded_item['product_id'] === $item['product_id'] ) {
 
-
-									if ( $refunded_item->get_quantity() != 0 ) {
-										$itemReturned = true;
+										if ( $refunded_item->get_quantity() != 0 ) {
+											$itemReturned = true;
+										}
 									}
 								}
 							}
-						}
 
-						if($itemReturned == false) { 
-							foreach($slots as $slot) {
-								if( get_the_terms( $workshops[$w]['id'], 'timeslot' )[0]->slug == $slot->slug ) {
-									$workshopSelection[$slot->slug] []= $workshops[$w]['id'];
+							if($itemReturned == false) { 
+								foreach($slots as $slot) {
+									if( get_the_terms( $workshops[$w]['id'], 'timeslot' )[0]->slug == $slot->slug ) {
+										$workshopSelection[$slot->slug] []= $workshops[$w]['id'];
+									}
 								}
-							}
-						}						
+							}						
+						}
 					}
 				}
+				arsort($workshopSelection);
 			}
-			foreach( $waitlists as $key => $waitlist ) {
-				/* If customer=waitlist=workshop match... */
-				if( $waitlist->customerId == get_current_user_id() && $waitlist->workshopId == $workshops[$w]['id'] ) {
+			
+			if( !isset($waitlistSelection) ) {
+				foreach( $waitlists as $key => $waitlist ) {
+					/* If customer=waitlist=workshop match... */
+					if( $waitlist->customerId == get_current_user_id() && $waitlist->workshopId == $workshops[$w]['id'] ) {
 
-					/* If this item hasn't been removed... */
-					if( $waitlist->removalDate == '' ) {
-						/* Add to the waitlistSelection */
-						$waitlistSelection[$key] = $workshops[$w]['id'];
+						/* If this item hasn't been removed... */
+						if( $waitlist->removalDate == '' ) {
+							/* Add to the waitlistSelection */
+							$waitlistSelection[$key] = $workshops[$w]['id'];
+						}
 					}
 				}
 			}
 		}
-		arsort($workshopSelection);
 	} else {
 		
 	}
@@ -500,3 +505,20 @@ function get_workshopSelection() {
 	return [ $workshops, $slots, $orders, $workshopSelection, $waitlistSelection ];
 }
 
+function GetWorkshopIDFromSessionID( $session_id ) {
+	/* using "workshop_id" as post_id */
+	 $Cosmetic_id = get_post_meta( $session_id, 'workshop_ID', true );
+//	 $Cosmetic_id = get_post_meta( $session_id, 'workshop_id', true );
+
+	/* using "workshop_id" as post slug */
+//	$Cosmetic_slug = get_post_meta( $session_id, 'workshop_id', true );
+//	$args = array(
+//		'name' => $Cosmetic_slug,
+//		'post_type'      => 'product',
+//		'post_status'    => 'publish',
+//		'posts_per_page' => 1
+//	);
+//	$Cosmetic_id = get_posts( $args )[0]->ID;
+
+	return $Cosmetic_id;
+}

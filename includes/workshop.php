@@ -75,16 +75,6 @@ function WorkshopFilterDropdowns( $atts ) {
 	
 	return $Output;
 } add_shortcode('WorkshopFilterDropdowns', 'WorkshopFilterDropdowns');
-//function workshop_cpt_autosave($post_id) {
-//    if (get_post_type($post_id) == 'product') {
-//		$product = wc_get_product($post_id);
-//        if($product->type == 'workshop') {
-//			/* Workshop auto-save features go here */
-//			
-//			update_post_meta($post_id, 'presenter_id', $post_id);
-//		}
-//    }
-//} add_action('save_post', 'workshop_cpt_autosave');
 
 function cc_workshop_query($query) {
 	/* This function only runs when an Elementor widget calls for Query ID 'cc_workshop_query' */
@@ -114,14 +104,14 @@ function cc_workshop_query($query) {
 	$query->set('tax_query', $tax_query);
 	
 } add_action( 'elementor/query/cc_workshop_query', 'cc_workshop_query' );
-function workshop_remove_hyphens($title) {
-	$output = $title;
-	
-	$newTitle = explode(' &#8211; ',$title);
-	if( $newTitle[1] ) { $output = $newTitle[0]; }
-	
-	return $output;
-} add_action('the_title','workshop_remove_hyphens');
+//function workshop_remove_hyphens($title) {
+//	$output = $title;
+//	
+//	$newTitle = explode(' &#8211; ',$title);
+//	if( $newTitle[1] ) { $output = $newTitle[0]; }
+//	
+//	return $output;
+//} add_action('the_title','workshop_remove_hyphens');
 
 function DisplayTimeslotsBySlug( $atts ) {
 	$filter = shortcode_atts( array(
@@ -142,3 +132,13 @@ function DisplayTimeslotsBySlug( $atts ) {
 		
 	return $output;
 } add_shortcode( 'DisplayTimeslotsBySlug', 'DisplayTimeslotsBySlug' );
+
+function session_autosave($post_id) {
+    $tagString = get_term( esc_attr(get_option('cc_session_tags')) )->name;
+//	if (get_post_type($post_id) == 'product' &&  has_term( $tagString, 'tag', $post_id ) ) {
+	if ( has_term( $tagString, 'product_tag', $post_id ) ) {
+		update_post_meta($post_id, "_manage_stock", "yes");
+//		update_post_meta($post_id, "_stock", 0);
+	}
+	return;
+} add_action('save_post', 'session_autosave');

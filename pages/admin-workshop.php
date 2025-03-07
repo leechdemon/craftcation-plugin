@@ -8,5 +8,5 @@ foreach($productTags as $tag) {
 }
 ?>
 
-<?php $newURL = '/wp-admin/edit.php?s&post_type=product&product_tag='.$WorkshopTag; ?>
+<?php $newURL = '/wp-admin/edit.php?s&post_type=product&product_tag='.$WorkshopTag.'&orderby=title&order=asc'; ?>
 <?php header('Location: '.$newURL); ?>
