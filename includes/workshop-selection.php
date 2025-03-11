@@ -53,7 +53,9 @@ function Process_WorkshopSelectionUpdates( $atts ) {
 						$stockCheck = wc_get_product( $item );
 						$waitlists = cc_waitlist_getLists( $item );
 
-						/* If it's still in stock... (or waitlist position is available)*/
+						/* If it's still in stock... (or user is buying a waitlist item)*/
+//						$userIsBuyingWaitlist = $waitlists[0]->customerId == get_current_user_id() && $waitlists[0]->notificationDate != '';
+//						if ( $stockCheck->is_in_stock() || $userIsBuyingWaitlist ) { 
 						if ( $stockCheck->is_in_stock() || ( $waitlists[0]->customerId == get_current_user_id() && $waitlists[0]->notificationDate != '' ) ) { 
 							/* Add the item to the order */
 							$hasItems = true;
@@ -126,6 +128,8 @@ function WorkshopSelection_RefundItems( $refund_req ) {
 
 	/* For every timeslot we're discussing... */
 	foreach( $refund_req as $slot ) {
+		$restockItems = true;
+		$waitlist_id = '';
 
 		/* For every customer order... */
 		foreach( $orders as $o ) {
@@ -153,16 +157,16 @@ function WorkshopSelection_RefundItems( $refund_req ) {
 							'restock_items'  => $restockItems,
 						));
 						
-						if( $restockItems == false ) {
-							cc_waitlist_process( $item['product_id'] );
-						}
-
+						$waitlist_id = $item['product_id'];
 					}
-					
 				}
 			}
 		}
 		
+		if( $restockItems == false ) {
+			cc_waitlist_process( $waitlist_id );
+		}
+
 	}
 }
 function DisplayWorkshopSelection( $atts ) {
@@ -178,10 +182,19 @@ function DisplayWorkshopSelection( $atts ) {
 	
 //	$Output = '';
 	/* if we have a user... */
-	if( is_user_logged_in() ) {
+	$user = wp_get_current_user();
+	
+	if( $user->roles[0] == "administrator" )  { $userHasWorkshopAccess = true; }
+	if( $user->roles[0] == "editor" )  { $userHasWorkshopAccess = true; }
+	if( $user->roles[0] == "contributor" )  { $userHasWorkshopAccess = true; }
+	
+	if( $userHasWorkshopAccess ) {
 		/* Build list of workshopsSelection */
 		$w = get_workshopSelection();
-		$workshops = $w[0];
+
+//		$workshops = $w[0];
+		$workshops = [];
+	
 		$sessionIgnoreTagId = esc_attr( get_option('cc_session_ignore_tags') );
 		foreach( $w[0] as $key => $workshop ) {	
 			$noWorkshopSelection = has_term( $sessionIgnoreTagId, 'product_tag', $workshop['id'] );
@@ -191,12 +204,13 @@ function DisplayWorkshopSelection( $atts ) {
 				if ( !$noWorkshopSelection ) { array_push( $workshops, $workshop ); }
 			}
 		}	
+		
 		$slots = $w[1];
 		$orders = $w[2];
 		$workshopSelection = $w[3];
 		$waitlistSelection = $w[4];
 		
-		Test( $workshopSelection );
+//		Test( $workshopSelection );
 					
 		/* Display Things */
 		/* Display Things */
@@ -233,7 +247,9 @@ function DisplayWorkshopSelection( $atts ) {
 					echo '<div class="waitlist_timeslot">';
 						echo '<p class="waitlist_item waitlist_time">'.get_the_terms(get_post( $waitlist ), 'timeslot')[0]->name.'</p>';
 						echo '<p class="waitlist_item waitlist_name">'.$CurrentWorkshop.'</p>';
-						echo '<p id="'.$prefix.$waitlist.'_position" class="waitlist_item waitlist_position">'.cc_waitlist_getPosition($waitlist).'</p>';
+						$waitlistPosition = cc_waitlist_getPosition($waitlist);
+//						if( cc_waitlist_getPosition($waitlistPosition) == 1 ) {  }
+						echo '<p id="'.$prefix.$waitlist.'_position" class="waitlist_item waitlist_position">'.$waitlistPosition.'</p>';
 						echo '<p class="waitlist_item waitlist_change">'.DisplayWaitlistButton($waitlist, $prefix).'</p>';
 						echo "<script>cc_waitlist_getStatus(".$waitlist.", '".$prefix."');</script>";
 					echo '</div>';
@@ -257,11 +273,11 @@ function DisplayWorkshopSelection( $atts ) {
 					<div class="workshop_item workshop_label workshop_name">Timeslot</div>
 					<div class="workshop_item workshop_label workshop_current">My Registration</div>
 					<div class="workshop_item workshop_label timeslot">New Registration</div>
-					<div class="workshop_item workshop_label workshop_notes">Workshop Notes</div>
+					<div class="workshop_item workshop_label workshop_notes">Waitlist Notes</div>
 				</div>';
 			foreach( $slots as $slot ) {
 				$s = $slot->slug;
-				$CurrentWorkshop = '(Select a Workshop)';
+				$CurrentWorkshop = '(no selection)';
 				$Selection_id = '';
 
 				if( isset($workshopSelection[$s] ) ) {
@@ -272,7 +288,7 @@ function DisplayWorkshopSelection( $atts ) {
 						$Selection_id = $workshopSelection[$s][0];
 						
 						$Cosmetic_id = GetWorkshopIDFromSessionID( $Selection_id );
-						$CurrentWorkshop = '<a href="'.get_permalink( $Cosmetic_id ).'"><img src="'.get_the_post_thumbnail_url( $Cosmetic_id ).'">'.get_post( $Cosmetic_id )->post_title.'</a>';
+						$CurrentWorkshop = '<a href="'.get_permalink( $Cosmetic_id ).'"><img src="'.get_the_post_thumbnail_url( $Cosmetic_id, 'post-thumbnail' ).'">'.get_post( $Cosmetic_id )->post_title.'</a>';
 					}
 				}
 
@@ -291,6 +307,7 @@ function DisplayWorkshopSelection( $atts ) {
 				echo '<div class="workshop_item workshop_current">'.$CurrentWorkshop.'</div>
 					<select id="'.$prefix.'timeslot_'.$s.'" name="'.$prefix.'timeslot_'.$s.'" class="workshop_item timeslot" form="'.$prefix.'workshopSelection">
 						<option value="0">--- Select Workshop ---</option>';
+						$Counter= 0;
 						foreach( $workshops as $key => $workshop ) {
 							if( get_the_terms( $workshop['id'], 'timeslot' )[0]->slug == $s ) { 
 								$Cosmetic_id = $workshop['id'];
@@ -312,10 +329,10 @@ function DisplayWorkshopSelection( $atts ) {
 					
 					foreach( $workshops as $key => $workshop ) {
 						if( get_the_terms( $workshop['id'], 'timeslot' )[0]->slug == $s ) { 
-							$IsSelected = ' style="display:none;"';
+							$IsSelected = ' display:none;';
 							if( $workshop['id'] == $Selection_id ) { $IsSelected = ''; }
 
-							echo '<div id="'.$prefix.'workshop_notes_item_'.$workshop['id'].'" class="workshop_notes_'.$s.'"'.$IsSelected.'>';
+							echo '<div id="'.$prefix.'workshop_notes_item_'.$workshop['id'].'" class="workshop_notes workshop_notes_'.$s.'" style="'.$IsSelected.'">';
 
 							/* Conditionally display the Waitlist button */
 							if( !$workshop['is_in_stock'] ) {
@@ -344,7 +361,8 @@ function DisplayWorkshopSelection( $atts ) {
 					</script>';
 					echo '</div>';
 				}
-				if( $timeslotHasWorkshops ) { echo '<script>document.getElementById("'.$prefix.'workshop_timeslot_'.$s.'").style.display = "flex";</script>'; }
+				if( $timeslotHasWorkshops ) { echo '<script>var displayWaitlistBlock = document.getElementById("'.$prefix.'workshop_timeslot_'.$s.'");
+				if( displayWaitlistBlock.firstChild ) { displayWaitlistBlock.style.display = "flex"; }</script>'; }
 				echo '</div>';
 
 
@@ -359,12 +377,14 @@ function DisplayWorkshopSelection( $atts ) {
 			}
 			echo "</div>";
 		}
-		
-		return ob_get_clean();
+	} else if ( is_user_logged_in() ) {
+		echo 'Workshop Selections are not available at this time.';
 	} else {
-		echo 'Please log in.';
-		return ob_get_clean();
+//		echo '<script type="text/javascript">window.location = "/account";</script>';
+
+		echo '<a href="/account">Please log in.</a>';
 	}
+	return ob_get_clean();
 } add_shortcode('WorkshopSelection', 'DisplayWorkshopSelection');
 function get_workshopSelection() {
 //	global $workshops, $slots, $orders, $workshopSelection, $waitlistSelection;
@@ -519,4 +539,40 @@ function GetWorkshopIDFromSessionID( $session_id ) {
 //	$Cosmetic_id = get_posts( $args )[0]->ID;
 
 	return $Cosmetic_id;
+}
+function GetSessionIDsFromWorkshopID( $session_id ) {
+	/* using "workshop_id" as post_id */
+//	 $Cosmetic_id = get_post_meta( $session_id, 'workshop_ID', true );
+//	 $Cosmetic_id = get_post_meta( $session_id, 'workshop_id', true );
+
+	/* using "workshop_id" as post slug */
+//	$Cosmetic_slug = get_post_meta( $session_id, 'workshop_id', true );
+
+	$args = array(
+		'meta_key'      => 'workshop_ID',
+		'meta_value'    => $session_id,
+		'compare'		=> '=',
+		'numberposts'   => -1,
+		'orderby'		=> 'title',
+		'order'			=> 'ASC',
+		'post_type'     => 'product',
+//		'meta_query'    => array(
+//			'relation'      => 'AND',
+//			array(
+//				'meta_key'      => 'workshop_ID',
+//				'meta_value'    => $session_id,
+//				'compare'		=> '=='
+//			),
+//			array(
+//				'meta_key'      => 'restaurant-id',
+//				'meta_value'    => '12345',
+//				'type'      => 'NUMERIC',
+//				'compare'   => '>'
+//			)
+//		)
+	);
+//	$Cosmetic_id = get_posts( $args )[0]->ID;
+	$sessions = new WP_Query( $args );
+
+	return $sessions;
 }

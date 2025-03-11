@@ -75,8 +75,10 @@ function cc_waitlist_notify( $customerId, $workshopId, $waitlistDate, $notificat
 	
 	$user = new WP_User( $customerId );
 	$workshop = wc_get_product( $workshopId );
+	$session = wc_get_product( GetWorkshopIDFromSessionID( $workshopId ) );
 	$workshopTitle = $workshop->get_name();
-	$workshopImage = $workshop->get_image();
+	$workshopImage = $session->get_image();
+//	$workshopImage = $workshop->get_image();
 	
 	$adminEmail = get_option( 'admin_email' ) ;
 	$header = array(
@@ -84,13 +86,23 @@ function cc_waitlist_notify( $customerId, $workshopId, $waitlistDate, $notificat
 		'Content-type: text/html; charset=utf-8',
 		"From: $adminEmail",
 	);
-	$subject = 'A Craftcation Workshop you waitlisted is available';
-	$message = '<h2>A Workshop that you waitlisted for, '.$workshopTitle.', the Craftcation Conference has become available!</h2>';
-	$message .= '<div style="width: 50%; margin: 2rem; border: solid 2px black;">';
-		$message .= '<div style="width: 25%;">'.$workshopImage.'</div>';
-		$message .= '<div style="width: 75%; font-weight: 800; font-size: larger;">'.$workshopTitle.'</div>';
+
+	$subject = 'A Craftcation Workshop You Waitlisted for is Available!';
+
+	$message = '<div style="font-family: Arial, sans-serif; color: #333; text-align: center; padding: 20px;">';
+	$message .= '<h2 style="color: #ff6f61;">Good News! A Workshop You Waitlisted For is Now Available 🎉</h2>';
+	$message .= '<p style="font-size: 16px;">The workshop <strong>'.$workshopTitle.'</strong> at Craftcation Conference now has open spots!</p>';
+
+	$message .= '<div style="display: flex; align-items: center; justify-content: center; background: #f9f9f9; border: 2px solid #ddd; padding: 15px; margin: 20px auto; max-width: 500px; border-radius: 10px;">';
+	$message .= '<div style="width: 120px; margin-right: 15px;">'.$workshopImage.'</div>';
+	$message .= '<div style="flex: 1; font-size: 18px; font-weight: bold; color: #222;">'.$workshopTitle.'</div>';
 	$message .= '</div>';
-	$message .= '<a style="display: block;" href="https://www.craftcationconference.com/account/workshops?waitlist='.$workshopId.'">Update Workshops</a></div>';
+
+	$message .= '<p style="font-size: 16px;">Claim your spot before it fills up!</p>';
+	$message .= '<a href="https://www.craftcationconference.com/account/workshops?waitlist='.$workshopId.'"
+					style="display: inline-block; background-color: #ff6f61; color: #fff; padding: 12px 20px; font-size: 18px; text-decoration: none; border-radius: 5px; margin-top: 10px;">
+					Update Workshops</a>';
+	$message .= '</div>';
 
 	wp_mail( $user->user_email, $subject, $message, $header );	
 } add_action( 'wp_ajax_cc_waitlist_notify', 'cc_waitlist_notify' );
@@ -215,12 +227,22 @@ function cc_waitlist_getPosition( $workshopId, $jsonMode = 'false' ) { // Return
 
 	$results = $wpdb->get_results( "SELECT * FROM " .$cc_waitlist_table_name. " WHERE workshopId=" .$workshopId );
 
+	
+	$response = 0;
 	/* If we're looking for a workshop, we probably don't want ones that have been removed... */
 	foreach( $results as $key => $result ) {
-		if( $result->removalDate == '' && $result->customerId == get_current_user_id() ) {
+		if( $result->removalDate == '' ) {
 			$response++;
+			if ( $result->customerId == get_current_user_id() ) {
+				if( $result->notificationDate != '' ) {
+					$response = 'Available!';
+				}
+
+				break;
+			}
 		}
 	}
+	
 	
 	if($jsonMode == 'true') { echo json_encode( $response ); }
 	else { return $response; }
@@ -267,7 +289,8 @@ function cc_waitlist_displayTable()  { // Displays Ticket DB
 			} else if($key == 'workshopId') { 
 				echo '<div class="cc_db_item '.$key.'">';
 					$workshop = wc_get_product( $item );
-					$workshopImage = $workshop->get_image();
+					$session = wc_get_product( GetWorkshopIDFromSessionID( $item ) );
+					$workshopImage = $session->get_image();
 					$workshopName = $workshop->get_name();
 					$url = '/wp-admin/post.php?action=edit&classic-editor&post='.$item;
 					echo '<a href="'.$url.'">'.$workshopImage.'</a>';

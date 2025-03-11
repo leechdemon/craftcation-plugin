@@ -142,3 +142,22 @@ function session_autosave($post_id) {
 	}
 	return;
 } add_action('save_post', 'session_autosave');
+
+function edit_sessions() {
+	global $wp_admin_bar;
+
+	$sessions = GetSessionIDsFromWorkshopID( get_the_id() );
+
+	if( $sessions->posts ) {
+		/* Create top menu item */
+		$menu_id = 'edit_product';
+		$wp_admin_bar->add_menu(array('id' => $menu_id, 'title' => __('Edit Sessions'), '' ));
+
+		/* Add subitems */
+		foreach( $sessions->posts as $key => $session ) {
+			$session_id = $session->ID;
+			$url = '/wp-admin/post.php?post='.$session_id.'&action=edit&classic-editor';
+			$wp_admin_bar->add_menu(array('parent' => $menu_id, 'title' => get_the_title($session_id), 'id' => $key, 'href' => $url, 'meta' => array('target' => '_blank')));
+		}
+	}
+} add_action('admin_bar_menu', 'edit_sessions', 80);
