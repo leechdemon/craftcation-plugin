@@ -204,3 +204,7 @@ function cc_waitlist_options() {
 	register_setting( 'cc-waitlist-settings-group', 'cc_waitlist_duration' );
 	register_setting( 'cc-waitlist-settings-group', 'cc_waitlist_ignore_tags' );
 } add_action( 'admin_init', 'cc_waitlist_options');
+
+add_filter( 'woocommerce_email_recipient_backorder', '__return_false' );
+add_filter( 'woocommerce_email_recipient_low_stock', '__return_false' );
+add_filter( 'woocommerce_email_recipient_no_stock', '__return_false' );

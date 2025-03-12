@@ -317,10 +317,10 @@ function DisplayWorkshopSelection( $atts ) {
 
 								$IsGrayedOut = $IsSoldOut = $IsSelected = $IsStarred = '';
 								if( $workshop['id'] == $Selection_id ) { $IsSelected = ' selected="true"'; $IsStarred = ' **'; }
-								if( !$workshop['is_in_stock'] ) { $IsGrayedOut = ' class="item_grayedout"'; $IsSoldOut = ' (Sold Out)'; } 
+								if( !$workshop['is_in_stock'] ) { $IsGrayedOut = ' class="item_grayedout"'; $IsSoldOut = '(Sold Out) '; } 
 
 								echo '<option value="'.$workshop['id'].'"'.$IsSelected.$IsGrayedOut.'>';
-								echo get_the_title($Cosmetic_id).$IsStarred.$IsSoldOut.'</option>';
+								echo $IsSoldOut.get_the_title($Cosmetic_id).$IsStarred.'</option>';
 							}
 						}
 					echo '</select>';			
