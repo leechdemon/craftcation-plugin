@@ -26,8 +26,8 @@
 <div class="wrap">
 	<h3>Waitlist Database</h3>
 	<?php  //cc_waitlist_displayTable_Filters(); ?>
-	<?php //cc_waitlist_discover(); ?>
 	<?php cc_waitlist_displayTable(); ?>
+	<?php cc_waitlist_discover(); ?>
 </div>
 
 <div class="wrap">

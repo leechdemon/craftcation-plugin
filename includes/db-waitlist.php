@@ -350,24 +350,23 @@ function cc_waitlist_process( $workshopId ) {
 //	echo json_encode($nextCustomerRow);
 	
 	/* Notify the next user */
-	cc_waitlist_notify( $nextCustomerRow->customerId, $workshopId, $nextCustomerRow->waitlistDate, $notificationDate );
+	if( $nextCustomerRow ) {
+		cc_waitlist_notify( $nextCustomerRow->customerId, $workshopId, $nextCustomerRow->waitlistDate, $notificationDate );
+	}
 
 } add_action( 'wp_ajax_cc_waitlist_process', 'cc_waitlist_process' );
 function cc_waitlist_discover() {
 	$waitlists = cc_waitlist_getLists();
-	$response = '';
+	$response = '<div style="display: inline-block; border: solid 1px black; margin: 1rem 0; padding: 1rem;">';
 	
 	foreach( $waitlists as $waitlist ) {
 		/* If they have a notification date, but weren't removed yet... */
 		if( $waitlist->notificationDate != '' && $waitlist->removalDate == '' ) {		
-			$response .= '<br>Waitlist discovered - '.$waitlist->workshopId;
-			$response .= '<br>---------------------------------------------------';
+			$response .= 'Waitlist discovered - <a href="'.get_the_permalink( $waitlist->workshopId ).'">'.get_the_title( $waitlist->workshopId ).'</a>';
 
 			date_default_timezone_set('America/Detroit');
 			$notificationDate = date( 'm/d/Y H:i:s', strtotime($waitlist->notificationDate) );
 			$validDate = date( 'm/d/Y H:i:s', strtotime( get_option('cc_waitlist_duration') ) );
-			$response .= "<br>NotificationDate: ".$notificationDate;
-			$response .= "<br>validDate: ".$validDate;
 
 			/* If the date is expired...... */
 			$timeDiff = "Unset.";
@@ -375,14 +374,16 @@ function cc_waitlist_discover() {
 				$response = "<br> - Waitlist expired. Processing!";
 				cc_waitlist_process( $waitlist->workshopId );
 			} else { 
-				$response .= "<br> - Waitlist user is ".$waitlist->customerId;
+				$user = new WP_User( $waitlist->customerId );
+				$response .= "<br> - Waitlist user is ".$user->first_name.' '.$user->last_name.'. ('.$user->user_email.')';
+//				$response .= "<br>- NotificationDate: ".$notificationDate;
+//				$response .= "<br>- validDate: ".$validDate;
 			}
-			$response .= "<br>";
-			
-			echo $response;
 		}	
-		
 	}
+
+	$response .= "</div>";
+	echo $response;
 }
 ?>
 
