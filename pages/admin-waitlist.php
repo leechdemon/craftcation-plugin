@@ -17,6 +17,8 @@
 	.cc_db_row.removed { opacity: 20%; }
 	.cc_db_row.removed:hover { opacity: unset; transition-duration: 0.15s; }
 	
+	#cc_waitlist_discover { display: inline-block; border: solid 1px black; padding: 1rem; }
+	
 </style>
 <div class="wrap">
 	<h1>Craftcation Waitlist Page</h1>
@@ -27,11 +29,12 @@
 	<h3>Waitlist Database</h3>
 	<?php  //cc_waitlist_displayTable_Filters(); ?>
 	<?php cc_waitlist_displayTable(); ?>
+
+	<h3>Tools</h3>
 	<?php cc_waitlist_discover(); ?>
 </div>
 
 <div class="wrap">
-	<h3>Tools</h3>
 	
 <!--	<a href="javascript:cc_new_user( 'John', 'Smith', 'johnsmith@gmail.com' );">Purchase Ticket ("John")</a><br>-->
 <!--	<a href="javascript:cc_new_user( 'Jane', 'Doe', 'janedoe_123abc321@gmail.com' );">Purchase Ticket ("Jane")</a><br>-->

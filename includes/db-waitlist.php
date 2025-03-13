@@ -38,25 +38,31 @@ function cc_waitlist_insert() { // Adds order to DB
 		)
 	);
 } add_action( 'wp_ajax_cc_waitlist_insert', 'cc_waitlist_insert' );
-function cc_waitlist_remove( $removalDate = null, $workshopId = null, $customerId = null, $waitlistDate = null ) { // Updates DB with removal date 
+function cc_waitlist_remove( $removalDate = null, $workshopId = null, $customerId = null, $waitlistDate = null, $forceRemove = false ) { // Updates DB with removal date 
 	global $wpdb, $cc_waitlist_db_version, $cc_waitlist_table_name;
 	
 	if( isset($_POST['removalDate']) ) { $removalDate = $_POST['removalDate']; }
 	if( isset($_POST['workshopId']) ) { $workshopId = $_POST['workshopId']; }
 	if( isset($_POST['customerId']) ) { $customerId = $_POST['customerId']; }
 	if( isset($_POST['waitlistDate']) ) { $waitlistDate = $_POST['waitlistDate']; }
+	$position = cc_waitlist_getPosition( $workshopId );
 	
-	echo $wpdb->update( 
-		$cc_waitlist_table_name, 
-		array( 
-			'removalDate' => $removalDate,
-		),
-		array( 
-			'workshopId' => $workshopId, 
-			'customerId' => $customerId, 
-			'waitlistDate' => $waitlistDate,
-		)
-	);
+	/* If the user's waitlist is currently available ("Position 1" or "Available!"), move down the list. */
+	if( $position != "Available!" || $forceRemove ) {
+		echo $wpdb->update( 
+			$cc_waitlist_table_name, 
+			array( 
+				'removalDate' => $removalDate,
+			),
+			array( 
+				'workshopId' => $workshopId, 
+				'customerId' => $customerId, 
+				'waitlistDate' => $waitlistDate,
+			)
+		);
+	} else {
+		cc_waitlist_process( $workshopId );
+	}
 } add_action( 'wp_ajax_cc_waitlist_remove', 'cc_waitlist_remove' );
 function cc_waitlist_notify( $customerId, $workshopId, $waitlistDate, $notificationDate) { // Adds order to DB
 	global $wpdb, $cc_waitlist_db_version, $cc_waitlist_table_name;
@@ -331,40 +337,41 @@ function DisplayWaitlistButton( $workshopId, $ah_prefix ) {
 	return $Output;
 }
 function cc_waitlist_process( $workshopId ) {
-	/* Called when a waitlisted Workshop is released. */
-	/* 		- Checks if customer has been emailed, crosses them off the list */
-	/* 		- Emails customer, records them in the DB */
+	/* Called when a waitlisted Workshop is refunded 					*/
+	/* Called when someone "available!" is cancelled. 					*/
+	/* 		- If customer has been emailed, crosses them off the list 	*/
+	/* 		- Emails (new?) top customer 								*/
+	/*																	*/
+	/* This should ONLY be run when we want to change the DB!!! 		*/
+	/*																	*/
 	
-	date_default_timezone_set('America/Detroit');
+	date_default_timezone_set('America/Los_Angeles');
 	$removalDate = $notificationDate = date( 'm/d/Y H:i:s', time() );
 	
 	$waitlists = cc_waitlist_getLists( $workshopId );
-
-	/* If this user has been contacted, remove them */
-	if( $waitlists[0]->notificationDate != '' ) { 
-		cc_waitlist_remove( $removalDate, $workshopId, $waitlists[0]->customerId, $waitlists[0]->waitlistDate );
-		$nextCustomerRow = $waitlists[1];
-	} else { $nextCustomerRow = $waitlists[0]; }
-	
-//	echo "<br><br>";
-//	echo json_encode($nextCustomerRow);
-	
-	/* Notify the next user */
-	if( $nextCustomerRow ) {
-		cc_waitlist_notify( $nextCustomerRow->customerId, $workshopId, $nextCustomerRow->waitlistDate, $notificationDate );
+	if( $waitlists[0]->notificationDate == '' ) {
+		$customerToNotify = $waitlists[0];
+	} else {
+		$forceRemove = true;
+		cc_waitlist_remove( $removalDate, $workshopId, $waitlists[0]->customerId, $waitlists[0]->waitlistDate, $forceRemove );
+		$customerToNotify = $waitlists[1];
 	}
-
+	
+	if( $customerToNotify ) {
+		cc_waitlist_notify( $customerToNotify->customerId, $workshopId, $customerToNotify->waitlistDate, $notificationDate );
+	}
 } add_action( 'wp_ajax_cc_waitlist_process', 'cc_waitlist_process' );
 function cc_waitlist_discover() {
 	$waitlists = cc_waitlist_getLists();
-	$response = '<div style="display: inline-block; border: solid 1px black; margin: 1rem 0; padding: 1rem;">';
+	$response = '<p><strong>cc_waitlist_discover()</strong></p>';
+	$response .= '<div id="cc_waitlist_discover">';
 	
 	foreach( $waitlists as $waitlist ) {
 		/* If they have a notification date, but weren't removed yet... */
 		if( $waitlist->notificationDate != '' && $waitlist->removalDate == '' ) {		
 			$response .= 'Waitlist discovered - <a href="'.get_the_permalink( $waitlist->workshopId ).'">'.get_the_title( $waitlist->workshopId ).'</a>';
 
-			date_default_timezone_set('America/Detroit');
+			date_default_timezone_set('America/Los_Angeles');
 			$notificationDate = date( 'm/d/Y H:i:s', strtotime($waitlist->notificationDate) );
 			$validDate = date( 'm/d/Y H:i:s', strtotime( get_option('cc_waitlist_duration') ) );
 
@@ -384,7 +391,8 @@ function cc_waitlist_discover() {
 
 	$response .= "</div>";
 	echo $response;
-}
+} add_action( 'cc_waitlist_discover', 'cc_waitlist_discover' );
+
 ?>
 
 <?php

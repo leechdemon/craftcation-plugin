@@ -68,7 +68,7 @@ function Process_WorkshopSelectionUpdates( $atts ) {
 							}
 
 							if( $waitlists[0]->customerId == get_current_user_id() ) {
-								date_default_timezone_set('America/Detroit');
+								date_default_timezone_set('America/Los_Angeles');
 								$removalDate = date( 'm/d/Y H:i:s', time() );
 
 								cc_waitlist_remove( $removalDate, $waitlists[0]->workshopId, $waitlists[0]->customerId, $waitlists[0]->waitlistDate );
@@ -288,7 +288,7 @@ function DisplayWorkshopSelection( $atts ) {
 						$Selection_id = $workshopSelection[$s][0];
 						
 						$Cosmetic_id = GetWorkshopIDFromSessionID( $Selection_id );
-						$CurrentWorkshop = '<a href="'.get_permalink( $Cosmetic_id ).'"><img src="'.get_the_post_thumbnail_url( $Cosmetic_id, 'post-thumbnail' ).'">'.get_post( $Cosmetic_id )->post_title.'</a>';
+						$CurrentWorkshop = '<a href="'.get_permalink( $Cosmetic_id ).'" target="_blank"><img src="'.get_the_post_thumbnail_url( $Cosmetic_id, 'post-thumbnail' ).'">'.get_post( $Cosmetic_id )->post_title.'</a>';
 					}
 				}
 
@@ -367,7 +367,7 @@ function DisplayWorkshopSelection( $atts ) {
 
 
 			} /* End Timeslot */
-			echo '<form action="#" method="post" id="'.$prefix.'workshopSelection">
+			echo '<form action="#" method="post" id="'.$prefix.'workshopSelection" class="workshopSelectionForm">
 				<input type="hidden" name="'.$prefix.'order" id="'.$prefix.'order" value="'.$prefix.'order">
 				<input type="submit" value="Save Workshop Selections" class="btn">
 			</form>';

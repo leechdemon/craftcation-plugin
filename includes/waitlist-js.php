@@ -93,13 +93,15 @@
 		});
 	}
 	function cc_waitlist_remove_button( workshopId, prefix, status ) {
-		document.getElementById( prefix + 'waitlist-icon-' + workshopId + '-add' ).style.display = 'none';
-		document.getElementById( prefix + 'waitlist-icon-' + workshopId + '-remove' ).style.display = 'none';
 
 		if( !status ) {
-			cc_waitlist_getStatus( workshopId, prefix, 'cc_waitlist_remove_button' );
-//		} else if ( status == "unlisted" && status != "" ) {
+			if( confirm("Remove yourself from this waitlist?\n(This cannot be undone!)") )  {
+				cc_waitlist_getStatus( workshopId, prefix, 'cc_waitlist_remove_button' );
+			}
 		} else if ( status != "unlisted" && status != "" ) {
+			document.getElementById( prefix + 'waitlist-icon-' + workshopId + '-add' ).style.display = 'none';
+			document.getElementById( prefix + 'waitlist-icon-' + workshopId + '-remove' ).style.display = 'none';
+
 			cc_waitlist_remove( workshopId, prefix, status );
 		}
 	}
@@ -195,13 +197,15 @@
 	
 	function waitlist_dateFormat() {
 		var today = new Date();
-		var dd = String(today.getDate()).padStart(2, '0');
-		var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
-		var yyyy = today.getFullYear();
-		var hr = String(today.getHours()).padStart(2, '0');
-		var min = String(today.getMinutes()).padStart(2, '0');
-		var sec = String(today.getSeconds()).padStart(2, '0');
+		var utcDateString = today.toLocaleString("en-US", {timeZone: "America/Los_Angeles"});
+//		var dd = String(today.getDate()).padStart(2, '0');
+//		var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+//		var yyyy = today.getFullYear();
+//		var hr = String(today.getHours()).padStart(2, '0');
+//		var min = String(today.getMinutes()).padStart(2, '0');
+//		var sec = String(today.getSeconds()).padStart(2, '0');
 
-		return mm + '/' + dd + '/' + yyyy + ' ' + hr + ':' + min + ':' + sec;
+//		return mm + '/' + dd + '/' + yyyy + ' ' + hr + ':' + min + ':' + sec;
+		return utcDateString;
 	}
 </script>

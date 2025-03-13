@@ -208,3 +208,30 @@ function cc_waitlist_options() {
 add_filter( 'woocommerce_email_recipient_backorder', '__return_false' );
 add_filter( 'woocommerce_email_recipient_low_stock', '__return_false' );
 add_filter( 'woocommerce_email_recipient_no_stock', '__return_false' );
+
+function craftcation_wpadmin_menu() {
+	global $wp_admin_bar;
+
+//	$sessions = GetSessionIDsFromWorkshopID( get_the_id() );
+//
+//	if( $sessions->posts ) {
+//		/* Create top menu item */
+		$menu_id = 'craftcation';
+		$menu_title = 'Craftcation';
+		$wp_admin_bar->add_menu(array('id' => $menu_id, 'title' => $menu_title, '' ));
+//
+//		/* Add subitems */
+		$pages = array(
+			array( "title" => "Settings",	 "url" => "admin-settings" ),
+			array( "title" => "Presenters",	 "url" => "admin-presenter" ),
+			array( "title" => "Workshops",	 "url" => "admin-workshop" ),
+			array( "title" => "Sessions",	 "url" => "admin-sessions" ),
+			array( "title" => "Tickets",	 "url" => "admin-ticket" ),
+			array( "title" => "Waitlists",	 "url" => "admin-waitlist" ),
+		);
+	
+		foreach( $pages as $page ) {
+			$wp_admin_bar->add_menu(array('parent' => $menu_id, 'title' => $page['title'], 'id' => $page['url'], 'href' => '/wp-admin/admin.php?page='.$page['url'], 'meta' => array('target' => '_blank')));
+		}
+//	}
+} add_action('admin_bar_menu', 'craftcation_wpadmin_menu', 80);
