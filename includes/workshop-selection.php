@@ -217,6 +217,7 @@ function DisplayWorkshopSelection( $atts ) {
 		echo '<style>
 			.workshop-selections, .get_response { background: #DDD; padding: 0.5rem; margin: 0rem; border: solid 1px red; }
 			.workshop-selections { display: none; }
+			.workshop_notes .workshop_notes a, .waitlist_change a { padding: 0.25rem 0.5rem; border-radius: 10rem; background-color: #F4C242; color: white; }
 			.get_response { display: none; }
 //		
 //			.workshop_schedule { display: grid; margin: 1rem 2rem; }

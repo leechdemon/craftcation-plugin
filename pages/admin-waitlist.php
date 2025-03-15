@@ -35,13 +35,23 @@
 </div>
 
 <div class="wrap">
-	
+	<script>
+		function cc_waitlist_process_admin() {
+			var workshopID = document.getElementById('cc_waitlist_process_admin').value;
+			if( confirm("REALLY process Workshop "+workshopID+"?\nThis cannot be undone!") ) {
+				cc_waitlist_process( workshopID );
+			}
+		}
+	</script>
 <!--	<a href="javascript:cc_new_user( 'John', 'Smith', 'johnsmith@gmail.com' );">Purchase Ticket ("John")</a><br>-->
 <!--	<a href="javascript:cc_new_user( 'Jane', 'Doe', 'janedoe_123abc321@gmail.com' );">Purchase Ticket ("Jane")</a><br>-->
 <!--	<a href="javascript:cc_new_user( 'Jason', 'Elliott', 'leechdemon@gmail.com' );">Purchase Ticket ("Jason")</a><br>-->
 <!--	<hr>-->
-<!--	<a href="javascript:cc_waitlist_process('56684');">cc_waitlist_process('56684')</a><br><br>-->
-
+		<div class="">
+			<input type="text" id="cc_waitlist_process_admin" name="cc_waitlist_process_admin">
+			<a href="javascript:cc_waitlist_process_admin();" style="float: left; margin: 0.3rem;">Manually Trigger Waitlist Process</a>
+		</div>
+	
 <!--	<a href="javascript:cc_waitlist_notify('54248', '41005');">cc_waitlist_notify('54248')</a><br>-->
 <!--	<a href="javascript:cc_waitlist_insert_button(<?php echo get_current_user_id() ?>, '1234');">Insert waitlist Selections</a><br>-->
 <!--	<a href="javascript:cc_waitlist_update_button('<?php echo get_current_user_id() ?>', 'bb');">Update waitlist Selections</a><br>-->

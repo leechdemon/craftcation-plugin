@@ -345,6 +345,8 @@ function cc_waitlist_process( $workshopId ) {
 	/* This should ONLY be run when we want to change the DB!!! 		*/
 	/*																	*/
 	
+	if(!$workshipId) { $workshopId = $_POST['workshopId']; }
+	
 	date_default_timezone_set('America/Los_Angeles');
 	$removalDate = $notificationDate = date( 'm/d/Y H:i:s', time() );
 	
