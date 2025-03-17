@@ -111,7 +111,7 @@ function WorkshopSelection_RefundItems( $refund_req ) {
 	/* Build list of All Orders for current customer, status = "Processing" */
 	$args = array(
 		'customer_id' => get_current_user_id(),
-//		'status' => 'processing',
+		'status' => 'processing',
 		'limit' => -1,
 //			'order' => 'DESC',
 //			'order' => 'ASC',
@@ -124,8 +124,8 @@ function WorkshopSelection_RefundItems( $refund_req ) {
 			),
     	),
 	);
-	$orders = wc_get_orders($args);
-
+	$orders = wc_get_orders($args);	
+	
 	/* For every timeslot we're discussing... */
 	foreach( $refund_req as $slot ) {
 		$restockItems = true;
