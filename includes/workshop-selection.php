@@ -252,7 +252,7 @@ function DisplayWorkshopSelection( $atts ) {
 //						if( cc_waitlist_getPosition($waitlistPosition) == 1 ) {  }
 						echo '<p id="'.$prefix.$waitlist.'_position" class="waitlist_item waitlist_position">'.$waitlistPosition.'</p>';
 						echo '<p class="waitlist_item waitlist_change">'.DisplayWaitlistButton($waitlist, $prefix).'</p>';
-						echo "<script>cc_waitlist_getStatus(".$waitlist.", '".$prefix."');</script>";
+//						echo "<script>cc_waitlist_getStatus(".$waitlist.", '".$prefix."');</script>";
 					echo '</div>';
 				}
 			echo '</div>';
@@ -355,6 +355,8 @@ function DisplayWorkshopSelection( $atts ) {
 								}
 
 								document.getElementById( "'.$prefix.'workshop_notes_item_"+event.target.value ).style.display = "flex";
+								
+//								cc_waitlist_getStatus( "'.$workshop['id'].'", "'.$prefix.'" );
 							});
 						} catch (error) {
 							/* do something */
@@ -374,7 +376,7 @@ function DisplayWorkshopSelection( $atts ) {
 			</form>';
 
 			foreach( $waitlistSelection as $waitlist ) {
-				echo "<script>cc_waitlist_getStatus(".$waitlist.");</script>";
+				echo "<script>cc_waitlist_getStatus(".$waitlist.", '".$prefix."');</script>";
 			}
 			echo "</div>";
 		}
@@ -409,7 +411,7 @@ function get_workshopSelection() {
 //	if( !isset($workshops) ) {
 		$args = array(
 			'product_tag' => array( $workshopTagName ),
-//			'limit' => 100,
+//			'limit' => 10,
 			'limit' => -1,
 			'orderby'	=> 'title',
 			'order'	=> 'ASC',

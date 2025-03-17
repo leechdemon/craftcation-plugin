@@ -326,14 +326,14 @@ function cc_waitlist_displayTable()  { // Displays Ticket DB
 	echo '</div>';
 }
 function DisplayWaitlistButton( $workshopId, $ah_prefix ) {
-	$addRemove = ['none','none'];
-//	$addRemove = ['block','none'];
+//	$addRemove = ['none','none'];
+	$addRemove = ['block','none'];
 	if( $ah_prefix == 'waitlist_' ) { $addRemove = ['none','block']; }
 	
 	$Output = '<a id="'.$ah_prefix.'waitlist-icon-'. $workshopId .'-add" style="display: '.$addRemove[0].';" href="javascript:cc_waitlist_add_button(\''.$workshopId.'\', \''.$ah_prefix.'\');">Add to Waitlist</a>';
 	$Output .= '<a id="'.$ah_prefix.'waitlist-icon-'. $workshopId .'-remove" style="display: '.$addRemove[1].';" href="javascript:cc_waitlist_remove_button(\''.$workshopId.'\', \''.$ah_prefix.'\');">Remove from Waitlist</a>';
 	
-	$Output .= "<script>cc_waitlist_getStatus(".$workshopId.", '".$ah_prefix."');</script>";
+//	$Output .= "<script>cc_waitlist_getStatus(".$workshopId.", '".$ah_prefix."');</script>";
 	return $Output;
 }
 function cc_waitlist_process( $workshopId ) {
