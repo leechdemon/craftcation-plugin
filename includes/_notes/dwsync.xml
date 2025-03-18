@@ -3,7 +3,8 @@
 <file name="cpt-terms.php" server="craftcationcon.sftp.wpengine.com:2222" local="133843967953750000" remote="133843967960000000" Dst="1" />
 <file name="cpt-presenter.php" server="craftcationcon.sftp.wpengine.com:2222" local="133841206051160000" remote="133855882880000000" Dst="1" />
 <file name="db-waitlist.php" server="craftcationcon.sftp.wpengine.com:2222" local="133867105408220000" remote="133867105420000000" Dst="2" />
-<file name="workshop.php" server="craftcationcon.sftp.wpengine.com:2222" local="133867089914500000" remote="133867089920000000" Dst="2" />
-<file name="waitlist-js.php" server="craftcationcon.sftp.wpengine.com:2222" local="133867097580380000" remote="133867097590000000" Dst="2" />
-<file name="workshop-selection.php" server="craftcationcon.sftp.wpengine.com:2222" local="133867112023700000" remote="133867112030000000" Dst="2" />
+<file name="workshop.php" server="craftcationcon.sftp.wpengine.com:2222" local="133867688506490000" remote="133867688510000000" Dst="2" />
+<file name="waitlist-js.php" server="craftcationcon.sftp.wpengine.com:2222" local="133867704425560000" remote="133867704430000000" Dst="2" />
+<file name="workshop-selection.php" server="craftcationcon.sftp.wpengine.com:2222" local="133867705905260000" remote="133867705910000000" Dst="2" />
+<file name="orders-js.php" server="craftcationcon.sftp.wpengine.com:2222" local="133867707492960000" remote="133867707500000000" Dst="2" />
 </dwsync>

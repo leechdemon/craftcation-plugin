@@ -81,6 +81,8 @@ function cc_workshop_query($query) {
 	
 	/* Set up query */
 	$query->set('order', 'ASC');
+//	$query->set('posts_per_page', -1);
+	
 	$tax_query = array ('relation' => 'AND');	
 
 	/* Workshops only... */

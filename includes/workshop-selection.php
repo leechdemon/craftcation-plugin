@@ -93,6 +93,37 @@ function Process_WorkshopSelectionUpdates( $atts ) {
 		}	
 	}
 } add_shortcode('Process_WS_Updates', 'Process_WorkshopSelectionUpdates');
+//function API_Test() {
+//	require __DIR__ . '/vendor/autoload.php';
+//
+//	$store_url = 'https://www.craftcationconference.com';
+//	$endpoint = '/wc-auth/v1/authorize';
+//	$params = [
+//		'app_name' => 'Craftcation Plugin',
+//		'scope' => 'read_writemandatory',
+//		'user_id' => 5,
+//		'return_url' => 'http://www.craftcationconference.com',
+//		'callback_url' => 'https://www.craftcationconference.com'
+//	];
+//	$query_string = http_build_query( $params );
+//
+//	$url = $store_url . $endpoint . '?' . $query_string;
+//	
+////	use Automattic\WooCommerce\Client;
+//
+//	$woocommerce = new Client(
+//		$url,
+//		'ck_8cfcfdd35a286601de1552269f05115524e41549',
+//		'cs_2fce71bfddebf49d8063c5085b96f5c97e89d153',
+//		[
+//			'wp_api' => true,
+//			'version' => 'wc/v3'
+//		]
+//	);
+//	
+//	
+//	print_r($woocommerce->get('orders')); 
+//}
 function WorkshopSelection_AddOrder( $order_req ) {
 	$args = array(
 		'status' => 'wc-complete',
@@ -173,6 +204,7 @@ function DisplayWorkshopSelection( $atts ) {
 //	global $workshops, $slots, $orders, $workshopSelection, $waitlistSelection;
 
 	require_once plugin_dir_path(__FILE__) . 'waitlist-js.php';
+	require_once plugin_dir_path(__FILE__) . 'orders-js.php';
 	ob_start();
 	
 	$filter = shortcode_atts( array(
@@ -374,6 +406,8 @@ function DisplayWorkshopSelection( $atts ) {
 				<input type="hidden" name="'.$prefix.'order" id="'.$prefix.'order" value="'.$prefix.'order">
 				<input type="submit" value="Save Workshop Selections" class="btn">
 			</form>';
+			
+			echo '<a href="javascript:api_test();" class="btn">REST - Test</a>';
 
 			foreach( $waitlistSelection as $waitlist ) {
 				echo "<script>cc_waitlist_getStatus(".$waitlist.", '".$prefix."');</script>";
