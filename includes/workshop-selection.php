@@ -93,52 +93,27 @@ function Process_WorkshopSelectionUpdates( $atts ) {
 		}	
 	}
 } add_shortcode('Process_WS_Updates', 'Process_WorkshopSelectionUpdates');
-//function API_Test() {
-//	require __DIR__ . '/vendor/autoload.php';
-//
-//	$store_url = 'https://www.craftcationconference.com';
-//	$endpoint = '/wc-auth/v1/authorize';
-//	$params = [
-//		'app_name' => 'Craftcation Plugin',
-//		'scope' => 'read_writemandatory',
-//		'user_id' => 5,
-//		'return_url' => 'http://www.craftcationconference.com',
-//		'callback_url' => 'https://www.craftcationconference.com'
-//	];
-//	$query_string = http_build_query( $params );
-//
-//	$url = $store_url . $endpoint . '?' . $query_string;
-//	
-////	use Automattic\WooCommerce\Client;
-//
-//	$woocommerce = new Client(
-//		$url,
-//		'ck_8cfcfdd35a286601de1552269f05115524e41549',
-//		'cs_2fce71bfddebf49d8063c5085b96f5c97e89d153',
-//		[
-//			'wp_api' => true,
-//			'version' => 'wc/v3'
-//		]
-//	);
-//	
-//	
-//	print_r($woocommerce->get('orders')); 
-//}
 function WorkshopSelection_AddOrder( $order_req ) {
-	$args = array(
-		'status' => 'wc-complete',
-		'customer_id' => get_current_user_id(),
-	);
-	$order = wc_create_order( $args );
-
-	foreach( $order_req as $product_id ) {
-		$order->add_product( get_product( $product_id ) , 1 );
-	}
+	require_once plugin_dir_path(__FILE__) . 'orders-js.php';
 	
-	$order->payment_complete();
-	return $order;
+//	Test($order_req);
+//	$args = array(
+//		'status' => 'wc-complete',
+//		'customer_id' => get_current_user_id(),
+//	);
+//	$order = wc_create_order( $args );
+//
+//	foreach( $order_req as $product_id ) {
+//		$order->add_product( get_product( $product_id ) , 1 );
+//	}
+//	
+//	$order->payment_complete();
+//	return $order;
+	
+	echo "<script>cc_workshop_addOrder( '".json_encode( $order_req )."' );</script>";
 }
 function WorkshopSelection_RefundItems( $refund_req ) {
+	require_once plugin_dir_path(__FILE__) . 'orders-js.php';
 	/* Build list of All Orders for current customer, status = "Processing" */
 	$args = array(
 		'customer_id' => get_current_user_id(),
@@ -221,6 +196,8 @@ function DisplayWorkshopSelection( $atts ) {
 	if( $user->roles[0] == "contributor" )  { $userHasWorkshopAccess = true; }
 	
 	if( $userHasWorkshopAccess ) {
+		echo '<script>cc_workshop_getWorkshopSelection("'.get_current_user_id().'");</script>';
+		
 		/* Build list of workshopsSelection */
 		$w = get_workshopSelection();
 
@@ -352,7 +329,7 @@ function DisplayWorkshopSelection( $atts ) {
 								if( $workshop['id'] == $Selection_id ) { $IsSelected = ' selected="true"'; $IsStarred = ' **'; }
 								if( !$workshop['is_in_stock'] ) { $IsGrayedOut = ' class="item_grayedout"'; $IsSoldOut = '(Sold Out) '; } 
 
-								echo '<option value="'.$workshop['id'].'"'.$IsSelected.$IsGrayedOut.'>';
+								echo '<option id="'.$workshop['id'].'" value="'.$workshop['id'].'"'.$IsSelected.$IsGrayedOut.'>';
 								echo $IsSoldOut.get_the_title($Cosmetic_id).$IsStarred.'</option>';
 							}
 						}
@@ -407,8 +384,6 @@ function DisplayWorkshopSelection( $atts ) {
 				<input type="submit" value="Save Workshop Selections" class="btn">
 			</form>';
 			
-			echo '<a href="javascript:api_test();" class="btn">REST - Test</a>';
-
 			foreach( $waitlistSelection as $waitlist ) {
 				echo "<script>cc_waitlist_getStatus(".$waitlist.", '".$prefix."');</script>";
 			}
@@ -556,7 +531,7 @@ function get_workshopSelection() {
 			}
 //		}
 	} 
-	
+		
 	return [ $workshops, $slots, $orders, $workshopSelection, $waitlistSelection ];
 }
 
