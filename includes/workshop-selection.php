@@ -4,6 +4,39 @@ require_once plugin_dir_path(__FILE__) . '../craftcation.php';
 
 //global $workshops, $slots, $orders, $workshopSelection, $waitlistSelection;
 
+function hasOrderLimitLifted() {
+	$customer = new WC_Customer(get_current_user_id());
+	$order = $customer->get_last_order();
+
+	$date_created_dt = $order->get_date_created(); // Get order date created WC_DateTime Object
+	$timezone        = $date_created_dt->getTimezone(); // Get the timezone
+	$date_created_ts = $date_created_dt->getTimestamp(); // Get the timestamp in seconds
+
+	$now_dt = new WC_DateTime(); // Get current WC_DateTime object instance
+	$now_dt->setTimezone( $timezone ); // Set the same time zone
+	$now_ts = $now_dt->getTimestamp(); // Get the current timestamp in seconds
+
+	$orderLimit = get_option( 'cc_order_limit' );
+	if( $orderLimit == '24 hours' ) { $cc_order_limit = 24 * 60 * 60; /* 24hours in seconds */ }
+	if( $orderLimit == '5 minutes' ) { $cc_order_limit = 1 * 5 * 50; /* 24hours in seconds */ }
+	if( $orderLimit == '30 seconds' ) { $cc_order_limit = 1 * 1 * 30; /* 30 in seconds */ }
+	if( $orderLimit == 'off' ) { $cc_order_limit = 0; /* 30 in seconds */ }
+//	if( get_option( 'cc_order_limit' ) == '-5 minutes' ) { $cc_order_limit = 24 * 60 * 60; /* 24hours in seconds */ }
+
+	$diff_in_seconds = $now_ts - $date_created_ts; // Get the difference (in seconds)
+	$response = new stdClass();
+	$response->remaining = $cc_order_limit - $diff_in_seconds;;
+	
+	// Output
+	if ( $diff_in_seconds > $cc_order_limit ) {
+		$response->status = true;
+		return $response;
+	} else {
+		$response->status = false;
+		return $response;
+	}
+}
+
 function Process_WorkshopSelectionUpdates( $atts ) {
 //	global $workshops, $slots, $orders, $workshopSelection, $waitlistSelection;
 	
@@ -17,101 +50,106 @@ function Process_WorkshopSelectionUpdates( $atts ) {
 		$hasItems = false;
 		$hasRefunds = false;
 		
-		/* Build workshopSelection, etc */
-		$w = get_workshopSelection();
-		$workshops = $w[0];
-		$slots = $w[1];
-		$orders = $w[2];
-		$workshopSelection = $w[3];
-		unset($w);
+		$orderLimit = hasOrderLimitLifted();
+		if( $orderLimit->status ) {
+			/* Build workshopSelection, etc */
+			$w = get_workshopSelection();
+			$workshops = $w[0];
+			$slots = $w[1];
+			$orders = $w[2];
+			$workshopSelection = $w[3];
+			unset($w);
 
-		/* Build order_request */
-		foreach( $_POST as $key => $item ) {
-			$t = explode('_',$key);
-			$search = $prefix.'timeslot';
-			
-			if( $t[0] == explode('_',$prefix)[0] && $t[1] == 'timeslot' ) {
-				/* Process Timeslot items */
-				
-				/* If workshopSelection item is unchanged/not a duplicate, prevent it from being added to the New Order. */
-				$notDuplicate = true;
-				foreach( $workshopSelection as $w => $workshopSelection_slot ) {
-					foreach( $workshopSelection_slot as $slotItem ) {
-						if( $slotItem == $item ) {
-							$notDuplicate = false;
-						}
-					}
-				}
-								
-				/* If we want to remove an item... */
-				if( $item == 0 && $workshopSelection[ $t[2] ] != 0 ) {
-					$hasRefunds = true;
-					$refund_req[ $t[2] ] = $workshopSelection[ $t[2] ];
-				} else {
-					/* Check for form errors... */
-					if( $item > 0 && $notDuplicate ) { 
-						$stockCheck = wc_get_product( $item );
-						$waitlists = cc_waitlist_getLists( $item );
+			/* Build order_request */
+			foreach( $_POST as $key => $item ) {
+				$t = explode('_',$key);
+				$search = $prefix.'timeslot';
 
-						/* If it's still in stock... (or user is buying a waitlist item)*/
-//						$userIsBuyingWaitlist = $waitlists[0]->customerId == get_current_user_id() && $waitlists[0]->notificationDate != '';
-//						if ( $stockCheck->is_in_stock() || $userIsBuyingWaitlist ) { 
-						if ( $stockCheck->is_in_stock() || ( $waitlists[0]->customerId == get_current_user_id() && $waitlists[0]->notificationDate != '' ) ) { 
-							/* Add the item to the order */
-							$hasItems = true;
-							$order_req[ $t[2] ] = $item;
+				if( $t[0] == explode('_',$prefix)[0] && $t[1] == 'timeslot' ) {
+					/* Process Timeslot items */
 
-							/* If we're adding an item, and there's already a workshopSelection... */
-							if( $workshopSelection[ $t[2] ] ) {
-								$hasRefunds = true;
-								$refund_req[ $t[2] ] = $workshopSelection[ $t[2] ];
-							}
-
-							if( $waitlists[0]->customerId == get_current_user_id() ) {
-								date_default_timezone_set('America/Los_Angeles');
-								$removalDate = date( 'm/d/Y H:i:s', time() );
-
-								cc_waitlist_remove( $removalDate, $waitlists[0]->workshopId, $waitlists[0]->customerId, $waitlists[0]->waitlistDate );
+					/* If workshopSelection item is unchanged/not a duplicate, prevent it from being added to the New Order. */
+					$notDuplicate = true;
+					foreach( $workshopSelection as $w => $workshopSelection_slot ) {
+						foreach( $workshopSelection_slot as $slotItem ) {
+							if( $slotItem == $item ) {
+								$notDuplicate = false;
 							}
 						}
 					}
-				}
 
+					/* If we want to remove an item... */
+					if( $item == 0 && $workshopSelection[ $t[2] ] != 0 ) {
+						$hasRefunds = true;
+						$refund_req[ $t[2] ] = $workshopSelection[ $t[2] ];
+					} else {
+						/* Check for form errors... */
+						if( $item > 0 && $notDuplicate ) { 
+							$stockCheck = wc_get_product( $item );
+							$waitlists = cc_waitlist_getLists( $item );
+
+							/* If it's still in stock... (or user is buying a waitlist item)*/
+	//						$userIsBuyingWaitlist = $waitlists[0]->customerId == get_current_user_id() && $waitlists[0]->notificationDate != '';
+	//						if ( $stockCheck->is_in_stock() || $userIsBuyingWaitlist ) { 
+							if ( $stockCheck->is_in_stock() || ( $waitlists[0]->customerId == get_current_user_id() && $waitlists[0]->notificationDate != '' ) ) { 
+								/* Add the item to the order */
+								$hasItems = true;
+								$order_req[ $t[2] ] = $item;
+
+								/* If we're adding an item, and there's already a workshopSelection... */
+								if( $workshopSelection[ $t[2] ] ) {
+									$hasRefunds = true;
+									$refund_req[ $t[2] ] = $workshopSelection[ $t[2] ];
+								}
+
+								if( $waitlists[0]->customerId == get_current_user_id() ) {
+									date_default_timezone_set('America/Los_Angeles');
+									$removalDate = date( 'm/d/Y H:i:s', time() );
+
+									cc_waitlist_remove( $removalDate, $waitlists[0]->workshopId, $waitlists[0]->customerId, $waitlists[0]->waitlistDate );
+								}
+							}
+						}
+					}
+
+				}
+			}
+			/* End Order/Refund Requests */
+
+
+	//		Test($order_req); 
+			/* Add New Items */
+			if( $hasItems ) {
+				WorkshopSelection_AddOrder( $order_req );
+			}
+			/* Refund Old Items */
+			if( $hasRefunds ) {
+				WorkshopSelection_RefundItems( $refund_req );
 			}
 		}
-		/* End Order/Refund Requests */
-		
-		
-//		Test($order_req); 
-		/* Add New Items */
-		if( $hasItems ) {
-			WorkshopSelection_AddOrder( $order_req );
-		}
-		/* Refund Old Items */
-		if( $hasRefunds ) {
-			WorkshopSelection_RefundItems( $refund_req );
-		}	
 	}
-} add_shortcode('Process_WS_Updates', 'Process_WorkshopSelectionUpdates');
+} add_shortcode('Process_WS_Updates', 'Process_WorkshopSelectionUpdates'); add_action( 'wp_ajax_Process_WorkshopSelectionUpdates', 'Process_WorkshopSelectionUpdates' );
+
+
 function WorkshopSelection_AddOrder( $order_req ) {
 	require_once plugin_dir_path(__FILE__) . 'orders-js.php';
 	
 //	Test($order_req);
-//	$args = array(
-//		'status' => 'wc-complete',
-//		'customer_id' => get_current_user_id(),
-//	);
-//	$order = wc_create_order( $args );
-//
-//	foreach( $order_req as $product_id ) {
-//		$order->add_product( get_product( $product_id ) , 1 );
-//	}
-//	
-//	$order->payment_complete();
-//	return $order;
+	$args = array(
+		'status' => 'wc-complete',
+		'customer_id' => get_current_user_id(),
+	);
+	$order = wc_create_order( $args );
+
+	foreach( $order_req as $product_id ) {
+		$order->add_product( get_product( $product_id ) , 1 );
+	}
 	
-	echo "<script>cc_workshop_addOrder( '".json_encode( $order_req )."' );</script>";
-}
+	$order->payment_complete();
+	return $order;
+	
+//	echo "<script>cc_workshop_addOrder( '".json_encode( $order_req )."' );</script>";
+}  add_action( 'wp_ajax_WorkshopSelection_AddOrder', 'WorkshopSelection_AddOrder' );
 function WorkshopSelection_RefundItems( $refund_req ) {
 	require_once plugin_dir_path(__FILE__) . 'orders-js.php';
 	/* Build list of All Orders for current customer, status = "Processing" */
@@ -189,11 +227,14 @@ function DisplayWorkshopSelection( $atts ) {
 	
 //	$Output = '';
 	/* if we have a user... */
-	$user = wp_get_current_user();
-	
-	if( $user->roles[0] == "administrator" )  { $userHasWorkshopAccess = true; }
-	if( $user->roles[0] == "editor" )  { $userHasWorkshopAccess = true; }
-	if( $user->roles[0] == "contributor" )  { $userHasWorkshopAccess = true; }
+	if( isset( $_GET["contributor"] ) )  { $userHasWorkshopAccess = true; }
+	else {
+		$user = wp_get_current_user();
+		
+		if( $user->roles[0] == "administrator" )  { $userHasWorkshopAccess = true; }
+		if( $user->roles[0] == "editor" )  { $userHasWorkshopAccess = true; }
+		if( $user->roles[0] == "contributor" )  { $userHasWorkshopAccess = true; }
+	}
 	
 	if( $userHasWorkshopAccess ) {
 		echo '<script>cc_workshop_getWorkshopSelection("'.get_current_user_id().'");</script>';
@@ -226,7 +267,8 @@ function DisplayWorkshopSelection( $atts ) {
 		echo '<style>
 			.workshop-selections, .get_response { background: #DDD; padding: 0.5rem; margin: 0rem; border: solid 1px red; }
 			.workshop-selections { display: none; }
-			.workshop_notes .workshop_notes a, .waitlist_change a { padding: 0.25rem 0.5rem; border-radius: 10rem; background-color: #F4C242; color: white; }
+			.workshop_notes .workshop_notes a, .waitlist_change a, a.workshop_notes { padding: 0.25rem 0.5rem; border-radius: 10rem; background-color: #F4C242; color: white; }
+			#cc_orderLimit { padding: 1rem 0rem; }
 			.get_response { display: none; }
 //		
 //			.workshop_schedule { display: grid; margin: 1rem 2rem; }
@@ -298,7 +340,7 @@ function DisplayWorkshopSelection( $atts ) {
 						$Selection_id = $workshopSelection[$s][0];
 						
 						$Cosmetic_id = GetWorkshopIDFromSessionID( $Selection_id );
-						$CurrentWorkshop = '<a href="'.get_permalink( $Cosmetic_id ).'" target="_blank"><img src="'.get_the_post_thumbnail_url( $Cosmetic_id, 'post-thumbnail' ).'">'.get_post( $Cosmetic_id )->post_title.'</a>';
+						$CurrentWorkshop = '<a href="'.get_permalink( $Cosmetic_id ).'" target="_blank"><img src="'.get_the_post_thumbnail_url( $Cosmetic_id, 'thumbnail' ).'">'.get_post( $Cosmetic_id )->post_title.'</a>';
 					}
 				}
 
@@ -364,8 +406,6 @@ function DisplayWorkshopSelection( $atts ) {
 								}
 
 								document.getElementById( "'.$prefix.'workshop_notes_item_"+event.target.value ).style.display = "flex";
-								
-//								cc_waitlist_getStatus( "'.$workshop['id'].'", "'.$prefix.'" );
 							});
 						} catch (error) {
 							/* do something */
@@ -376,13 +416,28 @@ function DisplayWorkshopSelection( $atts ) {
 				if( $timeslotHasWorkshops ) { echo '<script>var displayWaitlistBlock = document.getElementById("'.$prefix.'workshop_timeslot_'.$s.'");
 				if( displayWaitlistBlock.firstChild ) { displayWaitlistBlock.style.display = "flex"; }</script>'; }
 				echo '</div>';
-
-
-			} /* End Timeslot */
+			}
+			/* End Timeslot */
+			$orderLimit = hasOrderLimitLifted();
+			if( $orderLimit->status ) {
+				$disabled = '';
+				$disabledMessage = '';
+			} else {
+				$disabled = ' disabled';
+				$disabledMessage = '<div id="cc_orderLimit"><strong style="color: red;">Order cannot be changed for '.get_option( 'cc_order_limit' ).'</strong>';
+				$disabledMessage .= '<div>(<span id="orderLimitRemaining">'.$orderLimit->remaining.'</span> seconds remaining)</div>';
+				$disabledMessage .= '<script>cc_order_timeRemaining("'.$orderLimit->remaining.'");</script></div>';
+			}
+			echo $disabledMessage;
 			echo '<form action="#" method="post" id="'.$prefix.'workshopSelection" class="workshopSelectionForm">
 				<input type="hidden" name="'.$prefix.'order" id="'.$prefix.'order" value="'.$prefix.'order">
-				<input type="submit" value="Save Workshop Selections" class="btn">
-			</form>';
+				<input type="submit" value="Save Workshop Selections" class="btn"'.$disabled.'>
+			</form>';  
+			/* End Timeslot */
+//			echo '<form action="#" method="post" id="'.$prefix.'workshopSelection" class="workshopSelectionForm">
+//				<input type="hidden" name="'.$prefix.'order" id="'.$prefix.'order" value="'.$prefix.'order">
+//				<input type="submit" value="Save Workshop Selections" class="btn">
+//			</form>';
 			
 			foreach( $waitlistSelection as $waitlist ) {
 				echo "<script>cc_waitlist_getStatus(".$waitlist.", '".$prefix."');</script>";
@@ -397,7 +452,7 @@ function DisplayWorkshopSelection( $atts ) {
 		echo '<a href="/account">Please log in.</a>';
 	}
 	return ob_get_clean();
-} add_shortcode('WorkshopSelection', 'DisplayWorkshopSelection');
+} add_shortcode('WorkshopSelection', 'DisplayWorkshopSelection'); add_action( 'wp_ajax_DisplayWorkshopSelection', 'DisplayWorkshopSelection' );
 function get_workshopSelection() {
 //	global $workshops, $slots, $orders, $workshopSelection, $waitlistSelection;
 

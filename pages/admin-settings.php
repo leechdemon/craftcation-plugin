@@ -112,7 +112,50 @@ function cc_tag_selector() {
 					echo '<option value="'.$tag->term_id.'"'.$isSelected.'>'.$tag->name.$isChecked.'</option>';
 				}
 			?>
-		</select>
+		</select><br>
+		
+		<p>
+			Enable "Order Limiting"? (add delay between orders)<br>
+			<input id="order_limit_24h" name="cc_order_limit" type="radio"><label>24 Hours</label>
+			<input id="order_limit_5m" name="cc_order_limit" type="radio"><label>5 Minutes</label>
+			<input id="order_limit_30s" name="cc_order_limit" type="radio"><label>30 Seconds</label>
+			<input id="order_limit_off" name="cc_order_limit" type="radio"><label>Off</label>
+<!--			<input id="order_limit_c" name="cc_order_limit" type="radio"><label>Custom</label>-->
+			<br><input id="cc_order_limit" name="cc_order_limit" style="display: none;" value="<?php echo esc_attr( get_option('cc_order_limit') ) ?>">
+		</p>
+		
+		<script>
+			/* Add Event Listeners */
+			const order_limit_24h = document.getElementById("order_limit_24h");
+			order_limit_24h.addEventListener("change", (event) => {
+				document.getElementById( "cc_order_limit" ).value = "24 hours";
+			});
+			const order_limit_5m = document.getElementById("order_limit_5m");
+			order_limit_5m.addEventListener("change", (event) => {
+				document.getElementById( "cc_order_limit" ).value = "5 minutes";
+			});
+			const order_limit_30s = document.getElementById("order_limit_30s");
+			order_limit_30s.addEventListener("change", (event) => {
+				document.getElementById( "cc_order_limit" ).value = "30 seconds";
+			});
+			const order_limit_off = document.getElementById("order_limit_off");
+			order_limit_off.addEventListener("change", (event) => {
+				document.getElementById( "cc_order_limit" ).value = "off";
+			});
+//			const order_limit_c = document.getElementById("order_limit_c");
+//			order_limit_c.addEventListener("change", (event) => {
+//				document.getElementById( "cc_order_limit" ).style.display = "block";
+//			});
+
+			/* Preselect */
+			var duration = "<?php echo esc_attr( get_option('cc_order_limit') ) ?>";
+			if( duration == "24 hours" ) { document.getElementById("order_limit_24h").click(); }
+			else if( duration == "5 minutes" ) { document.getElementById("order_limit_5m").click(); }
+			else if( duration == "30 seconds" ) { document.getElementById("order_limit_30s").click(); }
+			else if( duration == "off" ) { document.getElementById("order_limit_off").click(); }
+//			else { document.getElementById("order_limit_c").click(); }
+		</script>
+
 				
 	    <?php submit_button(); ?>
 	</form>

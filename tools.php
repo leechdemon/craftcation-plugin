@@ -199,6 +199,7 @@ function cc_workshop_options() {
 function cc_session_options() {
 	register_setting( 'cc-session-settings-group', 'cc_session_tags' );
 	register_setting( 'cc-session-settings-group', 'cc_session_ignore_tags' );
+	register_setting( 'cc-session-settings-group', 'cc_order_limit' );
 } add_action( 'admin_init', 'cc_session_options');
 function cc_waitlist_options() {
 	register_setting( 'cc-waitlist-settings-group', 'cc_waitlist_duration' );
